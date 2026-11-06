@@ -73,7 +73,6 @@ function initialData() {
 
   return {
     vehicles,
-    maintenanceAudit: [],
     maintenances: [
       { id: 'm-demo-1', vehicleId: 'v-demo-1', type: 'Cambio de aceite', date: '2026-10-20', km: 10000, description: 'Cambio de aceite y filtros', provider: 'Taller Central', cost: 680, parts: 'Aceite y filtro', nextKm: 15000 },
       { id: 'm-demo-2', vehicleId: 'v-demo-3', type: 'Preventivo', date: '2026-09-30', km: 10000, description: 'Chequeo preventivo general', provider: 'Servicio Automotriz', cost: 420, parts: 'Revisión general', nextKm: 15000 }
@@ -111,8 +110,6 @@ function saveLocal() {
 async function initDb() {
   if (!process.env.DATABASE_URL) {
     loadLocal();
-    local.maintenanceAudit = local.maintenanceAudit || [];
-    local.maintenances = local.maintenances || [];
     local.vehicles.forEach(v => syncOilForVehicle(local, v.id));
     saveLocal();
     console.log('Usando almacenamiento local JSON');
@@ -159,17 +156,18 @@ async function initDb() {
     await pool.query('INSERT INTO app_state(id,payload) VALUES(1,$1)', [JSON.stringify(initialData())]);
   } else {
     const data = result.rows[0].payload;
-    data.maintenanceAudit = data.maintenanceAudit || [];
-    data.maintenances = data.maintenances || [];
     (data.vehicles || []).forEach(v => syncOilForVehicle(data, v.id));
     await writeData(data);
   }
 }
 
 async function readData() {
-  if (!pool) return local;
-  const r = await pool.query('SELECT payload FROM app_state WHERE id=1');
-  return r.rows[0].payload;
+  let data;
+  if (!pool) data = local;
+  else { const r = await pool.query('SELECT payload FROM app_state WHERE id=1'); data = r.rows[0].payload; }
+  data.maintenanceAudit = data.maintenanceAudit || [];
+  data.maintenances = data.maintenances || [];
+  return data;
 }
 
 async function writeData(data) {
@@ -188,9 +186,11 @@ async function writeData(data) {
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 const num = v => Number.isFinite(Number(v)) ? Number(v) : 0;
 const clean = s => String(s ?? '').trim();
-function auditMaintenance(data, action, record, summary, before = null) {
+function auditMaintenance(data, action, record, detail='') {
   data.maintenanceAudit = data.maintenanceAudit || [];
-  data.maintenanceAudit.unshift({ id: uid(), vehicleId: record.vehicleId, maintenanceId: record.id, action, summary, actor: 'Usuario del sistema', at: new Date().toISOString(), before: before ? { ...before } : null, after: action === 'ANULADO' ? null : { ...record } });
+  const v = (data.vehicles || []).find(x => String(x.id) === String(record.vehicleId));
+  data.maintenanceAudit.unshift({ id: uid(), at: new Date().toISOString(), action, vehicleName: v ? `${v.name}${v.plate ? ' · '+v.plate : ''}` : 'Vehículo no disponible', detail: detail || `${record.type || ''} · Chofer: ${record.driverName || 'No indicado'} · Taller: ${record.provider || 'No indicado'}` });
+  data.maintenanceAudit = data.maintenanceAudit.slice(0, 500);
 }
 
 function syncOilForVehicle(data, vehicleId) {
@@ -198,7 +198,7 @@ function syncOilForVehicle(data, vehicleId) {
   if (!v) return;
 
   const history = (data.maintenances || [])
-    .filter(m => String(m.vehicleId) === String(vehicleId) && m.status !== 'Anulado' && String(m.type || '').toLowerCase().includes('aceite'))
+    .filter(m => String(m.vehicleId) === String(vehicleId) && String(m.type || '').toLowerCase().includes('aceite'))
     .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')) || num(b.km) - num(a.km));
 
   const latest = history[0];
@@ -551,21 +551,17 @@ app.post('/api/maintenances', async (req, res) => {
       provider: clean(b.provider),
       cost: num(b.cost),
       parts: clean(b.parts),
-      category: clean(b.category) || 'Mantenimiento',
-      driverName: clean(b.driverName),
-      technicianName: clean(b.technicianName),
-      laborCost: num(b.laborCost),
-      partsCost: num(b.partsCost),
-      costTotal: b.costTotal !== undefined ? num(b.costTotal) : num(b.cost) + num(b.laborCost) + num(b.partsCost),
-      status: clean(b.status) || 'Completado',
+      workKind: clean(b.workKind) || (clean(b.type).toLowerCase() === 'reparación' ? 'Reparación' : 'Mantenimiento'),
+      driverName: clean(b.driverName), technician: clean(b.technician),
+      laborCost: num(b.laborCost), partsCost: num(b.partsCost), totalCost: num(b.totalCost ?? b.cost),
+      status: clean(b.status) || 'Realizado',
       nextDate: b.nextDate || null,
       nextKm: num(b.nextKm),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      createdAt: new Date().toISOString()
     };
 
     d.maintenances.unshift(m);
-    auditMaintenance(d, 'CREADO', m, `${m.category}: ${m.type} · Conductor: ${m.driverName || 'No consignado'}`);
+    auditMaintenance(d, 'CREACIÓN', m);
     const v = d.vehicles.find(x => String(x.id) === String(m.vehicleId));
 
     if (v) {
@@ -599,7 +595,6 @@ app.put('/api/maintenances/:id', async (req, res) => {
     if (i < 0) return res.status(404).json({ error: 'Registro no encontrado' });
 
     const previous = d.maintenances[i];
-    const before = { ...previous };
     const b = req.body;
 
     d.maintenances[i] = {
@@ -614,18 +609,17 @@ app.put('/api/maintenances/:id', async (req, res) => {
       description: clean(b.description),
       provider: clean(b.provider),
       parts: clean(b.parts),
-      category: clean(b.category ?? previous.category) || 'Mantenimiento',
+      workKind: clean(b.workKind ?? previous.workKind) || 'Mantenimiento',
       driverName: clean(b.driverName ?? previous.driverName),
-      technicianName: clean(b.technicianName ?? previous.technicianName),
+      technician: clean(b.technician ?? previous.technician),
       laborCost: num(b.laborCost ?? previous.laborCost),
       partsCost: num(b.partsCost ?? previous.partsCost),
-      costTotal: b.costTotal !== undefined ? num(b.costTotal) : num(b.cost ?? previous.cost) + num(b.laborCost ?? previous.laborCost) + num(b.partsCost ?? previous.partsCost),
-      status: clean(b.status ?? previous.status) || 'Completado',
-      updatedAt: new Date().toISOString()
+      totalCost: num(b.totalCost ?? b.cost ?? previous.totalCost ?? previous.cost),
+      status: clean(b.status ?? previous.status) || 'Realizado'
     };
 
     const m = d.maintenances[i];
-    auditMaintenance(d, 'EDITADO', m, `Se actualizaron datos de ${m.type}`, before);
+    auditMaintenance(d, 'EDICIÓN', m, `Se actualizaron los datos de ${m.type}. Chofer: ${m.driverName || 'No indicado'}.`);
 
     if (String(previous.vehicleId) !== String(m.vehicleId)) {
       syncOilForVehicle(d, previous.vehicleId);
@@ -655,14 +649,11 @@ app.delete('/api/maintenances/:id', async (req, res) => {
     const d = await readData();
     const old = d.maintenances.find(x => String(x.id) === req.params.id);
     if (!old) return res.status(404).json({ error: 'Registro no encontrado' });
-    const before = { ...old };
     old.status = 'Anulado';
-    old.cancelledAt = new Date().toISOString();
-    old.updatedAt = old.cancelledAt;
-    auditMaintenance(d, 'ANULADO', old, `Se anuló la intervención ${old.type}`, before);
-    if (String(old.type || '').toLowerCase().includes('aceite')) syncOilForVehicle(d, old.vehicleId);
+    old.annulledAt = new Date().toISOString();
+    auditMaintenance(d, 'ANULACIÓN', old, `Se anuló la intervención: ${old.type || ''}. El registro se conserva.`);
     await writeData(d);
-    res.json({ ok: true, message: 'Registro anulado y conservado en el historial.' });
+    res.json({ ok: true, preserved: true });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
@@ -931,22 +922,6 @@ app.get('/api/export/excel', async (req, res) => {
 
     const ww = XLSX.utils.json_to_sheet(weekly);
     XLSX.utils.book_append_sheet(wb, ww, 'Revisión semanal');
-
-    const historyRows = (d.maintenances || []).map(m => ({
-      'FECHA': m.date || '', 'VEHÍCULO': (d.vehicles || []).find(v => String(v.id) === String(m.vehicleId))?.name || '',
-      'PLACA': (d.vehicles || []).find(v => String(v.id) === String(m.vehicleId))?.plate || '',
-      'CLASE': m.category || 'Mantenimiento', 'TRABAJO': m.type || '', 'KM': num(m.km),
-      'CONDUCTOR': m.driverName || '', 'TALLER': m.provider || '', 'TÉCNICO': m.technicianName || '',
-      'REPUESTOS': m.parts || '', 'MANO DE OBRA': num(m.laborCost), 'REPUESTOS S/': num(m.partsCost),
-      'OTROS S/': num(m.cost), 'TOTAL S/': num(m.costTotal ?? m.cost), 'ESTADO': m.status || 'Completado',
-      'DETALLE': m.description || ''
-    }));
-    const wh = XLSX.utils.json_to_sheet(historyRows);
-    XLSX.utils.book_append_sheet(wb, wh, 'Historial técnico');
-
-    const auditRows = (d.maintenanceAudit || []).map(a => ({ 'FECHA Y HORA': a.at || '', 'VEHÍCULO': (d.vehicles || []).find(v => String(v.id) === String(a.vehicleId))?.name || '', 'ACCIÓN': a.action, 'USUARIO': a.actor, 'DETALLE': a.summary }));
-    const wa = XLSX.utils.json_to_sheet(auditRows);
-    XLSX.utils.book_append_sheet(wb, wa, 'Auditoría');
 
     const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
     res.setHeader('Content-Disposition', 'attachment; filename=Control_Flota_Martinez.xlsx');
