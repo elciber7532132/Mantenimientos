@@ -104,11 +104,9 @@ window.registerOil=id=>{const v=vehicle(id);openModal('Registrar cambio de aceit
 $('#oilReportBtn')?.addEventListener('click',()=>{window.location.href=API_BASE+'/api/export/excel'});
 $('#addMaintenance').onclick=()=>openModal('Registrar mantenimiento',[
  {name:'vehicleId',label:'Vehículo',type:'select',options:vehicleOptions(),required:true},
- {name:'type',label:'Tipo de servicio',type:'select',required:true,options:['Preventivo','Correctivo','Cambio de aceite','Reparación','Neumáticos','Otro'].map(x=>({value:x,label:x}))},
+ {name:'type',label:'Tipo de servicio',type:'select',required:true,options:['Preventivo','Correctivo','Reparación','Neumáticos','Otro'].map(x=>({value:x,label:x}))},
  {name:'date',label:'Fecha del servicio',type:'date',value:today(),required:true},
  {name:'km',label:'Kilometraje al servicio',type:'number',min:0,required:true},
- {name:'nextKm',label:'Próximo servicio (km)',type:'number',min:0},
- {name:'nextDate',label:'Próxima fecha (opcional)',type:'date'},
  {name:'workKind',label:'Clase de intervención',type:'select',options:['Mantenimiento','Reparación'].map(x=>({value:x,label:x}))},
  {name:'driverName',label:'Nombre del chofer'},
  {name:'provider',label:'Taller / proveedor'},
@@ -149,9 +147,8 @@ window.deleteObservation=async id=>{if(!confirm('¿Eliminar esta observación?')
 window.setObservation=async(id,status)=>{await api('/observations/'+id,{method:'PATCH',body:JSON.stringify({status})});await refresh();toast('Estado actualizado')};
 function commonMaintenanceFields(m={}){return [
  {name:'vehicleId',label:'Vehículo',type:'select',options:vehicleOptions(),required:true,value:m.vehicleId},
- {name:'type',label:'Tipo de servicio',type:'select',required:true,options:['Preventivo','Correctivo','Cambio de aceite','Reparación','Neumáticos','Otro'].map(x=>({value:x,label:x})),value:m.type},
+ {name:'type',label:'Tipo de servicio',type:'select',required:true,options:['Preventivo','Correctivo','Reparación','Neumáticos','Otro'].map(x=>({value:x,label:x})),value:m.type},
  {name:'date',label:'Fecha del servicio',type:'date',value:m.date||today(),required:true},{name:'km',label:'Kilometraje',type:'number',min:0,value:m.km,required:true},
- {name:'nextKm',label:'Próximo servicio (km)',type:'number',min:0,value:m.nextKm},{name:'nextDate',label:'Próxima fecha',type:'date',value:m.nextDate||''},
  {name:'workKind',label:'Clase de intervención',type:'select',options:['Mantenimiento','Reparación'].map(x=>({value:x,label:x})),value:m.workKind||(String(m.type).toLowerCase()==='reparación'?'Reparación':'Mantenimiento')},{name:'driverName',label:'Nombre del chofer',value:m.driverName},{name:'provider',label:'Taller / proveedor',value:m.provider},{name:'technician',label:'Mecánico / técnico responsable',value:m.technician},{name:'laborCost',label:'Mano de obra (S/)',type:'number',min:0,step:'0.01',value:m.laborCost},{name:'partsCost',label:'Repuestos (S/)',type:'number',min:0,step:'0.01',value:m.partsCost},{name:'cost',label:'Costo total (S/)',type:'number',min:0,step:'0.01',value:m.totalCost??m.cost},{name:'parts',label:'Repuestos',value:m.parts},{name:'status',label:'Estado',type:'select',options:['Realizado','Pendiente','Anulado'].map(x=>({value:x,label:x})),value:m.status||'Realizado'},{name:'description',label:'Detalle del trabajo / observaciones',type:'textarea',value:m.description,full:true}
 ]}
 window.editMaintenance=id=>{const m=DB.maintenances.find(x=>String(x.id)===String(id));openModal('Editar mantenimiento',commonMaintenanceFields(m),d=>api('/maintenances/'+id,{method:'PUT',body:JSON.stringify(d)}))};
