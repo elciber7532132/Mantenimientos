@@ -17,7 +17,7 @@ function oilRemain(v){return (Number(v.oilLastKm||0)+Number(v.oilInterval||5000)
 function preventiveRemain(v){if(v.preventiveLastKm===undefined||v.preventiveLastKm===null||v.preventiveLastKm==='')return null;return Number(v.preventiveLastKm)+Number(v.preventiveInterval||5000)-Number(v.currentKm||0)}
 function preventiveStatus(v){const r=preventiveRemain(v);if(r===null)return ['Sin chequeo','neutral'];return kmState(r)}
 function vehicleLabel(v){return `${v.name}${v.plate?' · '+v.plate:''}`}
-function showPage(name){$$('.page').forEach(p=>p.hidden=p.id!==`page-${name}`);$$('.nav').forEach(n=>n.classList.toggle('active',n.dataset.page===name));const titles={dashboard:'Panel general',vehicles:'Vehículos',oil:'Cambios de aceite',weekly:'Revisión semanal',maintenance:'Mantenimientos',documents:'Documentos y SOAT',observations:'Observaciones'};$('#pageTitle').textContent=titles[name]||name;render();window.scrollTo(0,0)}
+function showPage(name){$$('.page').forEach(p=>p.hidden=p.id!==`page-${name}`);$$('.nav').forEach(n=>n.classList.toggle('active',n.dataset.page===name));const titles={dashboard:'Panel general',vehicles:'Vehículos',oil:'Cambios de aceite',weekly:'Revisión semanal',maintenance:'Mantenimientos',documents:'Documentos y SOAT',observations:'Observaciones',history:'Historial técnico'};$('#pageTitle').textContent=titles[name]||name;render();window.scrollTo(0,0)}
 function go(name){showPage(name)}
 $$('.nav').forEach(b=>b.addEventListener('click',()=>go(b.dataset.page)));
 $$('[data-go]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.go)));
@@ -46,20 +46,34 @@ function render(){
  $('#dashboardOil').innerHTML=oil.slice(0,6).map(v=>{let r=oilRemain(v),s=oilStatus(v);return `<tr><td class="vehicle-name">${esc(v.name)}</td><td>${esc(v.plate||'—')}</td><td>${fmt(v.currentKm)}</td><td>${fmt(Number(v.oilLastKm||0)+Number(v.oilInterval||5000))}</td><td>${fmt(r)} km</td><td><span class="pill ${s[1]}">${s[0]}</span></td></tr>`}).join('')||emptyRow(6);
  $('#vehiclesTable').innerHTML=filteredVehicles().map(v=>`<tr><td class="vehicle-name">${esc(v.name)}</td><td>${esc(v.plate||'—')}</td><td>${fmt(v.currentKm)} km</td><td>${fmt(Number(v.oilLastKm||0)+Number(v.oilInterval||5000))} km</td><td>${v.preventiveLastKm!=null?fmt(v.preventiveLastKm)+' km':'—'}</td><td><span class="pill ${preventiveStatus(v)[1]}">${preventiveStatus(v)[0]}${preventiveRemain(v)!==null?' · '+fmt(preventiveRemain(v))+' km':''}</span></td><td><span class="pill ${v.active?'ok':'neutral'}">${v.active?'Activo':'Inactivo'}</span></td><td><button class="action-btn" onclick="editVehicle('${v.id}')">Editar</button> <button class="action-btn" onclick="toggleVehicle('${v.id}')">${v.active?'Desactivar':'Activar'}</button> <button class="action-btn danger" onclick="deleteVehicle('${v.id}')">Eliminar</button></td></tr>`).join('')||emptyRow(7);
  $('#oilTable').innerHTML=oil.map(v=>{let r=oilRemain(v),s=oilStatus(v);return `<tr><td class="vehicle-name">${esc(v.name)}<span class="sub">${esc(v.plate||'Sin placa')}</span></td><td>${dateFmt(v.oilLastDate)}</td><td>${fmt(v.oilLastKm)}</td><td>${fmt(v.currentKm)}</td><td>${fmt(Number(v.oilLastKm||0)+Number(v.oilInterval||5000))}</td><td>${fmt(r)} km</td><td><span class="pill ${s[1]}">${s[0]}</span></td><td><button class="action-btn" onclick="registerOil('${v.id}')">Registrar cambio</button> <button class="action-btn" onclick="editVehicle('${v.id}')">Editar</button></td></tr>`}).join('')||emptyRow(8);
- const ms=DB.maintenances.filter(m=>{let v=vehicle(m.vehicleId);const q=[$('#maintenanceSearch')?.value||'', $('#maintenanceDriverSearch')?.value||''].join(' ').toLowerCase();const hay=`${v?.name||''} ${v?.plate||''} ${m.type||''} ${m.category||''} ${m.description||''} ${m.driverName||''} ${m.provider||''} ${m.technicianName||''} ${m.parts||''}`.toLowerCase();return hay.includes(q)&&($('#maintenanceType')?.value==='all'||m.type===$('#maintenanceType')?.value)&&m.status!=='Anulado'});
- $('#maintenanceTable').innerHTML=ms.map(m=>`<tr><td>${dateFmt(m.date)}</td><td class="vehicle-name">${esc(vehicleLabel(vehicle(m.vehicleId)||{name:'Eliminado'}))}</td><td>${esc(m.type)}<span class="sub">${esc(m.description||'')}</span></td><td>${fmt(m.km)} km</td><td>${esc(m.provider||'—')}<span class="sub">Chofer: ${esc(m.driverName||'—')}</span></td><td>${money(m.costTotal ?? m.cost)}</td><td><button class="action-btn" onclick="viewVehicleHistory('${m.vehicleId}')">Historial</button> <button class="action-btn" onclick="editMaintenance('${m.id}')">Editar</button> <button class="action-btn danger" onclick="deleteItem('maintenances','${m.id}')">Anular</button></td></tr>`).join('')||emptyRow(7);
+ const ms=DB.maintenances.filter(m=>{let v=vehicle(m.vehicleId);return (!$('#maintenanceSearch')?.value||`${v?.name} ${v?.plate} ${m.type} ${m.description}`.toLowerCase().includes($('#maintenanceSearch').value.toLowerCase()))&&($('#maintenanceType')?.value==='all'||m.type===$('#maintenanceType')?.value)});
+ $('#maintenanceTable').innerHTML=ms.map(m=>`<tr><td>${dateFmt(m.date)}</td><td class="vehicle-name">${esc(vehicleLabel(vehicle(m.vehicleId)||{name:'Eliminado'}))}</td><td>${esc(m.type)}<span class="sub">${esc(m.description)}</span></td><td>${fmt(m.km)} km</td><td>${esc(m.provider||'—')}</td><td>${money(m.cost)}</td><td><button class="action-btn" onclick="editMaintenance('${m.id}')">Editar</button> <button class="action-btn danger" onclick="deleteItem('maintenances','${m.id}')">Eliminar</button></td></tr>`).join('')||emptyRow(7);
  $('#documentsTable').innerHTML=DB.documents.map(d=>{let s=docState(d.expiryDate);return `<tr><td class="vehicle-name">${esc(vehicleLabel(vehicle(d.vehicleId)||{name:'Eliminado'}))}</td><td>${esc(d.type)}</td><td>${esc(d.number||'—')}</td><td>${dateFmt(d.issueDate)}</td><td>${dateFmt(d.expiryDate)}</td><td><span class="pill ${s[1]}">${s[0]}</span></td><td><button class="action-btn" onclick="editDocument('${d.id}')">Editar</button> <button class="action-btn danger" onclick="deleteItem('documents','${d.id}')">Eliminar</button></td></tr>`}).join('')||emptyRow(7);
  const wr=DB.weeklyReviews||[];const weekStart=new Date();weekStart.setDate(weekStart.getDate()-((weekStart.getDay()+6)%7));weekStart.setHours(0,0,0,0);const weekEnd=new Date(weekStart);weekEnd.setDate(weekEnd.getDate()+7);const thisWeek=wr.filter(x=>{const d=new Date(x.date+'T12:00:00');return d>=weekStart&&d<weekEnd});
  $('#weeklyStats').innerHTML=[['Revisiones esta semana',thisWeek.length,'Inspecciones registradas'],['Conformes',thisWeek.filter(x=>x.result==='Conforme').length,'Sin observaciones'],['Requieren atención',thisWeek.filter(x=>x.result==='Requiere atención').length,'Revisar incidencias'],['Vehículos activos',active.length,'Unidades en flota']].map(x=>`<div class="stat"><div class="stat-top"><span>${x[0]}</span></div><strong>${fmt(x[1])}</strong><small>${x[2]}</small></div>`).join('');
  $('#weeklyTable').innerHTML=wr.map(r=>`<tr><td>${dateFmt(r.date)}</td><td class="vehicle-name">${esc(vehicleLabel(vehicle(r.vehicleId)||{name:'Eliminado'}))}</td><td>${fmt(r.km)} km</td><td>${esc(r.tires)}</td><td>${esc(r.brakes)}</td><td>${esc(r.lights)}</td><td>${esc(r.fluids)}</td><td><span class="pill ${r.result==='Conforme'?'ok':r.result==='Requiere atención'?'bad':'warn'}">${esc(r.result)}</span></td><td><button class="action-btn" onclick="editWeekly('${r.id}')">Editar</button> <button class="action-btn danger" onclick="deleteWeekly('${r.id}')">Eliminar</button></td></tr>`).join('')||emptyRow(9);
  $('#observationsList').innerHTML=DB.observations.map(o=>`<article class="obs-card"><div class="obs-meta"><span>${esc(vehicleLabel(vehicle(o.vehicleId)||{name:'Eliminado'}))}</span><span>${dateFmt(o.date)}</span></div><p>${esc(o.text)}</p><div class="obs-meta"><span class="pill ${o.priority==='Alta'?'bad':o.priority==='Baja'?'neutral':'warn'}">${esc(o.priority)}</span><div class="obs-actions"><select aria-label="Estado" onchange="setObservation('${o.id}',this.value)"><option ${o.status==='Pendiente'?'selected':''}>Pendiente</option><option ${o.status==='En proceso'?'selected':''}>En proceso</option><option ${o.status==='Resuelto'?'selected':''}>Resuelto</option></select><button class="action-btn" onclick="editObservation('${o.id}')">Editar</button> <button class="action-btn danger" onclick="deleteObservation('${o.id}')">Eliminar</button></div></div></article>`).join('')||'<div class="panel empty">Todavía no hay observaciones registradas.</div>';
+
+ const hq=($('#historySearch')?.value||'').toLowerCase();
+ const hv=$('#historyVehicle')?.value||'all', hk=$('#historyKind')?.value||'all', hs=$('#historyStatus')?.value||'all';
+ const history=(DB.maintenances||[]).filter(m=>{
+   const v=vehicle(m.vehicleId)||{name:'Vehículo eliminado',plate:''};
+   const kind=m.workKind||(String(m.type||'').toLowerCase()==='reparación'?'Reparación':'Mantenimiento');
+   const status=m.status||'Realizado';
+   const hay=[v.name,v.plate,m.driverName,m.type,m.description,m.provider,m.technician,m.parts].join(' ').toLowerCase();
+   return (!hq||hay.includes(hq))&&(hv==='all'||String(m.vehicleId)===hv)&&(hk==='all'||kind===hk)&&(hs==='all'||status===hs);
+ }).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+ const histBody=$('#historyTable');
+ if(histBody) histBody.innerHTML=history.map(m=>{const v=vehicle(m.vehicleId)||{name:'Vehículo eliminado'};const total=Number(m.totalCost??m.cost??0);const st=m.status||'Realizado';return `<tr><td>${dateFmt(m.date)}</td><td class="vehicle-name">${esc(vehicleLabel(v))}</td><td>${esc(m.driverName||'—')}</td><td>${esc(m.workKind|| (String(m.type).toLowerCase()==='reparación'?'Reparación':'Mantenimiento'))}<span class="sub">${esc(m.type||'')} · ${esc(m.description||'')}</span></td><td>${esc(m.provider||'—')}<span class="sub">${esc(m.technician||'')}</span></td><td>${fmt(m.km)} km</td><td>${money(total)}</td><td><span class="pill ${st==='Realizado'?'ok':st==='Anulado'?'neutral':'warn'}">${esc(st)}</span></td><td><button class="action-btn" onclick="editMaintenance('${m.id}')">Editar</button> ${st!=='Anulado'?`<button class="action-btn danger" onclick="annulHistory('${m.id}')">Anular</button>`:''}</td></tr>`}).join('')||emptyRow(9);
+ const audit=$('#historyAuditTable'); if(audit) audit.innerHTML=(DB.maintenanceAudit||[]).slice(0,30).map(a=>`<tr><td>${a.at?new Date(a.at).toLocaleString('es-PE'):'—'}</td><td>${esc(a.action)}</td><td>${esc(a.vehicleName||'—')}</td><td>${esc(a.detail||'')}</td></tr>`).join('')||emptyRow(4);
+ const vehicleFilter=$('#historyVehicle'); if(vehicleFilter){const old=vehicleFilter.value;vehicleFilter.innerHTML='<option value="all">Todos los vehículos</option>'+DB.vehicles.map(v=>`<option value="${esc(v.id)}">${esc(vehicleLabel(v))}</option>`).join('');vehicleFilter.value=[...vehicleFilter.options].some(o=>o.value===old)?old:'all';}
 }
 function emptyRow(n){return `<tr><td colspan="${n}" class="empty">No hay registros para mostrar.</td></tr>`}
 function filteredVehicles(){let q=$('#vehicleSearch')?.value.toLowerCase()||'',f=$('#vehicleFilter')?.value||'all';return DB.vehicles.filter(v=>(f==='all'||(f==='active'?v.active:!v.active))&&`${v.name} ${v.plate}`.toLowerCase().includes(q))}
-['vehicleSearch','vehicleFilter','maintenanceSearch','maintenanceType'].forEach(id=>$('#'+id)?.addEventListener('input',render));
+['vehicleSearch','vehicleFilter','maintenanceSearch','maintenanceType','historySearch','historyVehicle','historyKind','historyStatus'].forEach(id=>$('#'+id)?.addEventListener('input',render));
 function fields(items){return items.map(f=>`<div class="field ${f.full?'full':''}"><label>${f.label}${f.required?' *':''}</label>${f.type==='select'?`<select name="${f.name}" ${f.required?'required':''}>${f.options.map(o=>`<option value="${esc(o.value)}" ${String(o.value)===String(f.value)?'selected':''}>${esc(o.label)}</option>`).join('')}</select>`:f.type==='textarea'?`<textarea name="${f.name}" placeholder="${esc(f.placeholder||'')}"></textarea>`:`<input name="${f.name}" type="${f.type||'text'}" value="${esc(f.value??'')}" placeholder="${esc(f.placeholder||'')}" ${f.required?'required':''} ${f.min!==undefined?`min="${f.min}"`:''} ${f.step?`step="${f.step}"`:''}>`}</div>`).join('')}
 function vehicleOptions(){return DB.vehicles.map(v=>({value:v.id,label:vehicleLabel(v)}))}
-function openModal(title,formFields,submit){$('#modalForm .modal-actions').hidden=false;$('#modalTitle').textContent=title;$('#modalFields').innerHTML=fields(formFields);$('#modal').hidden=false;$('#modalForm').onsubmit=async e=>{e.preventDefault();let data=Object.fromEntries(new FormData(e.target).entries());try{await submit(data);$('#modal').hidden=true;e.target.reset();await refresh();toast('Registro guardado correctamente')}catch(err){toast(err.message)}}}
+function openModal(title,formFields,submit){$('#modalTitle').textContent=title;$('#modalFields').innerHTML=fields(formFields);$('#modal').hidden=false;$('#modalForm').onsubmit=async e=>{e.preventDefault();let data=Object.fromEntries(new FormData(e.target).entries());try{await submit(data);$('#modal').hidden=true;e.target.reset();await refresh();toast('Registro guardado correctamente')}catch(err){toast(err.message)}}}
 function closeModal(){$('#modal').hidden=true}
 $$('[data-close]').forEach(x=>x.addEventListener('click',closeModal));
 $('#addVehicle').onclick=()=>openModal('Registrar vehículo',[
@@ -88,40 +102,26 @@ window.deleteVehicle=async id=>{const v=vehicle(id);if(!confirm(`¿Eliminar defi
 window.toggleVehicle=async id=>{let v=vehicle(id);if(!confirm(`${v.active?'¿Desactivar':'¿Activar'} ${v.name}?`))return;await api('/vehicles/'+id,{method:'PUT',body:JSON.stringify({...v,active:!v.active})});await refresh();toast('Estado actualizado')};
 window.registerOil=id=>{const v=vehicle(id);openModal('Registrar cambio de aceite · '+v.name,[{name:'date',label:'Fecha del cambio',type:'date',value:today(),required:true},{name:'km',label:'Kilometraje al realizar el cambio',type:'number',min:0,value:v.currentKm,required:true},{name:'provider',label:'Taller / proveedor'},{name:'cost',label:'Costo (S/)',type:'number',min:0,step:'0.01'},{name:'parts',label:'Aceite y filtros utilizados'},{name:'description',label:'Observaciones',type:'textarea',full:true}],d=>api('/maintenances',{method:'POST',body:JSON.stringify({...d,vehicleId:id,type:'Cambio de aceite',nextKm:Number(d.km)+(Number(v.oilInterval)||5000)})}))};
 $('#oilReportBtn')?.addEventListener('click',()=>{window.location.href=API_BASE+'/api/export/excel'});
-// Herramientas del historial técnico: búsqueda ampliada y consulta por vehículo.
-(function setupTechnicalHistoryUI(){
- const filters=$('#maintenanceSearch')?.parentElement;
- if(filters && !$('#maintenanceDriverSearch')){
-   const driver=document.createElement('input'); driver.id='maintenanceDriverSearch'; driver.placeholder='Buscar por conductor…'; driver.setAttribute('aria-label','Buscar por conductor');
-   driver.style.minWidth='190px'; driver.addEventListener('input',()=>{const main=$('#maintenanceSearch'); if(main) main.value=driver.value; render();});
-   filters.appendChild(driver);
- }
- const toolbar=$('#addMaintenance')?.parentElement;
- if(toolbar && !$('#technicalHistoryInfo')){
-   const b=document.createElement('button'); b.id='technicalHistoryInfo'; b.className='btn btn-light'; b.textContent='▤ Historial por vehículo';
-   b.addEventListener('click',()=>{const name=prompt('Escribe el nombre o placa del vehículo para consultar su historial:');if(!name)return;const q=name.toLowerCase();const v=DB.vehicles.find(x=>`${x.name} ${x.plate}`.toLowerCase().includes(q));if(v)viewVehicleHistory(v.id);else toast('No se encontró ese vehículo');});
-   toolbar.insertBefore(b,$('#addMaintenance'));
- }
-})();
-
-$('#addMaintenance').onclick=()=>openModal('Registrar intervención de taller',[
+$('#addMaintenance').onclick=()=>openModal('Registrar mantenimiento',[
  {name:'vehicleId',label:'Vehículo',type:'select',options:vehicleOptions(),required:true},
- {name:'category',label:'Clase de intervención',type:'select',required:true,options:['Mantenimiento','Reparación'].map(x=>({value:x,label:x}))},
- {name:'type',label:'Tipo de trabajo',type:'select',required:true,options:['Preventivo','Correctivo','Cambio de aceite','Reparación mecánica','Sistema eléctrico','Frenos','Neumáticos','Suspensión','Otro'].map(x=>({value:x,label:x}))},
+ {name:'type',label:'Tipo de servicio',type:'select',required:true,options:['Preventivo','Correctivo','Cambio de aceite','Reparación','Neumáticos','Otro'].map(x=>({value:x,label:x}))},
  {name:'date',label:'Fecha del servicio',type:'date',value:today(),required:true},
- {name:'km',label:'Kilometraje al ingresar al taller',type:'number',min:0,required:true},
- {name:'driverName',label:'Nombre del conductor que llevó el vehículo',required:true},
- {name:'provider',label:'Nombre del taller / proveedor'},
- {name:'technicianName',label:'Técnico o mecánico responsable'},
- {name:'parts',label:'Repuestos, aceite o materiales utilizados',type:'textarea',full:true},
- {name:'laborCost',label:'Costo de mano de obra (S/)',type:'number',min:0,step:'0.01'},
- {name:'partsCost',label:'Costo de repuestos (S/)',type:'number',min:0,step:'0.01'},
- {name:'cost',label:'Otros costos (S/)',type:'number',min:0,step:'0.01'},
+ {name:'km',label:'Kilometraje al servicio',type:'number',min:0,required:true},
  {name:'nextKm',label:'Próximo servicio (km)',type:'number',min:0},
  {name:'nextDate',label:'Próxima fecha (opcional)',type:'date'},
- {name:'status',label:'Estado del trabajo',type:'select',options:['Completado','Pendiente','En proceso'].map(x=>({value:x,label:x}))},
- {name:'description',label:'Trabajo realizado, diagnóstico y observaciones',type:'textarea',full:true}
-],d=>api('/maintenances',{method:'POST',body:JSON.stringify({...d,costTotal:Number(d.laborCost||0)+Number(d.partsCost||0)+Number(d.cost||0)})}));
+ {name:'workKind',label:'Clase de intervención',type:'select',options:['Mantenimiento','Reparación'].map(x=>({value:x,label:x}))},
+ {name:'driverName',label:'Nombre del chofer'},
+ {name:'provider',label:'Taller / proveedor'},
+ {name:'technician',label:'Mecánico / técnico responsable'},
+ {name:'laborCost',label:'Costo de mano de obra (S/)',type:'number',min:0,step:'0.01'},
+ {name:'partsCost',label:'Costo de repuestos (S/)',type:'number',min:0,step:'0.01'},
+ {name:'cost',label:'Costo total (S/)',type:'number',min:0,step:'0.01'},
+ {name:'parts',label:'Repuestos utilizados'},
+ {name:'status',label:'Estado',type:'select',options:['Realizado','Pendiente'].map(x=>({value:x,label:x}))},
+ {name:'description',label:'Detalle y observaciones',type:'textarea',full:true}
+],d=>api('/maintenances',{method:'POST',body:JSON.stringify(d)}));
+$('#addHistory')?.addEventListener('click',()=>{go('maintenance');$('#addMaintenance').click()});
+window.annulHistory=async id=>{if(!confirm('¿Anular esta intervención? El registro permanecerá en el historial.'))return;await api('/maintenances/'+id,{method:'DELETE'});await refresh();toast('Intervención anulada; se conservó en el historial')};
 $('#addDocument').onclick=()=>openModal('Registrar documento',[
  {name:'vehicleId',label:'Vehículo',type:'select',options:vehicleOptions(),required:true},
  {name:'type',label:'Tipo de documento',type:'select',required:true,options:['SOAT','Revisión técnica','Seguro vehicular','Tarjeta de propiedad','Permiso de circulación','Otro'].map(x=>({value:x,label:x}))},
@@ -144,23 +144,17 @@ $('#addWeekly').onclick=()=>openModal('Registrar revisión semanal',[
  {name:'notes',label:'Observaciones / trabajos pendientes',type:'textarea',full:true}
 ],d=>api('/weekly-reviews',{method:'POST',body:JSON.stringify(d)}));
 window.deleteWeekly=async id=>{if(!confirm('¿Eliminar esta revisión semanal?'))return;await api('/weekly-reviews/'+id,{method:'DELETE'});await refresh();toast('Revisión eliminada')};
-window.deleteItem=async(type,id)=>{if(!confirm('¿Eliminar este registro?'))return;await api('/'+type+'/'+id,{method:'DELETE'});await refresh();toast('Registro eliminado')};
+window.deleteItem=async(type,id)=>{if(!confirm(type==='maintenances'?'¿Anular esta intervención? El registro se conservará en el historial.':'¿Eliminar este registro?'))return;await api('/'+type+'/'+id,{method:'DELETE'});await refresh();toast(type==='maintenances'?'Intervención anulada y conservada':'Registro eliminado')};
 window.deleteObservation=async id=>{if(!confirm('¿Eliminar esta observación?'))return;await api('/observations/'+id,{method:'DELETE'});await refresh();toast('Observación eliminada')};
 window.setObservation=async(id,status)=>{await api('/observations/'+id,{method:'PATCH',body:JSON.stringify({status})});await refresh();toast('Estado actualizado')};
 function commonMaintenanceFields(m={}){return [
  {name:'vehicleId',label:'Vehículo',type:'select',options:vehicleOptions(),required:true,value:m.vehicleId},
- {name:'category',label:'Clase de intervención',type:'select',options:['Mantenimiento','Reparación'].map(x=>({value:x,label:x})),value:m.category||'Mantenimiento'},
- {name:'type',label:'Tipo de trabajo',type:'select',required:true,options:['Preventivo','Correctivo','Cambio de aceite','Reparación mecánica','Sistema eléctrico','Frenos','Neumáticos','Suspensión','Otro'].map(x=>({value:x,label:x})),value:m.type},
+ {name:'type',label:'Tipo de servicio',type:'select',required:true,options:['Preventivo','Correctivo','Cambio de aceite','Reparación','Neumáticos','Otro'].map(x=>({value:x,label:x})),value:m.type},
  {name:'date',label:'Fecha del servicio',type:'date',value:m.date||today(),required:true},{name:'km',label:'Kilometraje',type:'number',min:0,value:m.km,required:true},
- {name:'driverName',label:'Conductor',value:m.driverName},{name:'provider',label:'Taller / proveedor',value:m.provider},{name:'technicianName',label:'Técnico responsable',value:m.technicianName},
- {name:'parts',label:'Repuestos y materiales',type:'textarea',value:m.parts,full:true},
- {name:'laborCost',label:'Mano de obra (S/)',type:'number',min:0,step:'0.01',value:m.laborCost},{name:'partsCost',label:'Repuestos (S/)',type:'number',min:0,step:'0.01',value:m.partsCost},{name:'cost',label:'Otros costos (S/)',type:'number',min:0,step:'0.01',value:m.cost},
  {name:'nextKm',label:'Próximo servicio (km)',type:'number',min:0,value:m.nextKm},{name:'nextDate',label:'Próxima fecha',type:'date',value:m.nextDate||''},
- {name:'status',label:'Estado',type:'select',options:['Completado','Pendiente','En proceso'].map(x=>({value:x,label:x})),value:m.status||'Completado'},
- {name:'description',label:'Diagnóstico, trabajo realizado y observaciones',type:'textarea',value:m.description,full:true}
+ {name:'workKind',label:'Clase de intervención',type:'select',options:['Mantenimiento','Reparación'].map(x=>({value:x,label:x})),value:m.workKind||(String(m.type).toLowerCase()==='reparación'?'Reparación':'Mantenimiento')},{name:'driverName',label:'Nombre del chofer',value:m.driverName},{name:'provider',label:'Taller / proveedor',value:m.provider},{name:'technician',label:'Mecánico / técnico responsable',value:m.technician},{name:'laborCost',label:'Mano de obra (S/)',type:'number',min:0,step:'0.01',value:m.laborCost},{name:'partsCost',label:'Repuestos (S/)',type:'number',min:0,step:'0.01',value:m.partsCost},{name:'cost',label:'Costo total (S/)',type:'number',min:0,step:'0.01',value:m.totalCost??m.cost},{name:'parts',label:'Repuestos',value:m.parts},{name:'status',label:'Estado',type:'select',options:['Realizado','Pendiente','Anulado'].map(x=>({value:x,label:x})),value:m.status||'Realizado'},{name:'description',label:'Detalle del trabajo / observaciones',type:'textarea',value:m.description,full:true}
 ]}
-window.viewVehicleHistory=id=>{const v=vehicle(id);if(!v)return;const rows=DB.maintenances.filter(m=>String(m.vehicleId)===String(id)).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));const audits=(DB.maintenanceAudit||[]).filter(a=>String(a.vehicleId)===String(id)).sort((a,b)=>String(b.at||'').localeCompare(String(a.at||'')));const body=rows.length?rows.map(m=>`<article class="obs-card"><div class="obs-meta"><b>${esc(m.type||'Intervención')} · ${dateFmt(m.date)}</b><span>${fmt(m.km)} km</span></div><p><b>Trabajo:</b> ${esc(m.description||'Sin descripción')}</p><p><b>Conductor:</b> ${esc(m.driverName||'No consignado')} · <b>Taller:</b> ${esc(m.provider||'No consignado')}</p><p><b>Técnico:</b> ${esc(m.technicianName||'No consignado')} · <b>Repuestos:</b> ${esc(m.parts||'—')}</p><p><b>Costos:</b> Mano de obra ${money(m.laborCost)} · Repuestos ${money(m.partsCost)} · Total ${money(m.costTotal??m.cost)}</p><p><b>Estado:</b> ${esc(m.status||'Completado')}${m.status==='Anulado'?' · Registro conservado':''}</p></article>`).join(''):'<div class="empty">Todavía no hay intervenciones registradas para este vehículo.</div>';const audit=audits.length?`<h3 style="margin:20px 0 10px">Registro de cambios</h3>`+audits.map(a=>`<div class="alert-item"><div class="alert-symbol">↻</div><div><b>${esc(a.action)}</b><small>${dateFmt(String(a.at||'').slice(0,10))} · ${esc(a.actor||'Usuario del sistema')} · ${esc(a.summary||'')}</small></div></div>`).join(''):'';$('#modalTitle').textContent=`Historial técnico · ${v.name} (${v.plate||'Sin placa'})`;$ ('#modalFields').innerHTML=`<div class="full"><p><b>Vehículo:</b> ${esc(v.name)} · <b>Placa:</b> ${esc(v.plate||'—')} · <b>KM actual:</b> ${fmt(v.currentKm)}</p><p><b>Intervenciones registradas:</b> ${rows.length}</p>${body}${audit}</div>`;$('#modal').hidden=false;$('#modalForm').onsubmit=e=>e.preventDefault();$('#modalForm .modal-actions').hidden=true;};
-window.editMaintenance=id=>{const m=DB.maintenances.find(x=>String(x.id)===String(id));openModal('Editar intervención',commonMaintenanceFields(m),d=>api('/maintenances/'+id,{method:'PUT',body:JSON.stringify({...d,costTotal:Number(d.laborCost||0)+Number(d.partsCost||0)+Number(d.cost||0)})}))};
+window.editMaintenance=id=>{const m=DB.maintenances.find(x=>String(x.id)===String(id));openModal('Editar mantenimiento',commonMaintenanceFields(m),d=>api('/maintenances/'+id,{method:'PUT',body:JSON.stringify(d)}))};
 window.editDocument=id=>{const d=DB.documents.find(x=>String(x.id)===String(id));openModal('Editar documento',[
  {name:'vehicleId',label:'Vehículo',type:'select',options:vehicleOptions(),required:true,value:d.vehicleId},
  {name:'type',label:'Tipo',type:'select',required:true,options:['SOAT','Revisión técnica','Seguro vehicular','Tarjeta de propiedad','Permiso de circulación','Otro'].map(x=>({value:x,label:x})),value:d.type},
@@ -175,7 +169,7 @@ window.editWeekly=id=>{const r=DB.weeklyReviews.find(x=>String(x.id)===String(id
  ...['tires','brakes','lights','fluids','cleaning','documents'].map((name,i)=>({name,label:['Neumáticos','Frenos','Luces','Niveles de aceite/agua','Limpieza general','Documentos'][i],type:'select',value:r[name],options:['Correcto','Deficiente','Pendiente'].map(x=>({value:x,label:x}))})),
  {name:'notes',label:'Observaciones',type:'textarea',value:r.notes,full:true}
 ],data=>api('/weekly-reviews/'+id,{method:'PUT',body:JSON.stringify(data)}))};
-async function refresh(){DB=await api('/data');DB.weeklyReviews=DB.weeklyReviews||[];render()}
+async function refresh(){DB=await api('/data');DB.weeklyReviews=DB.weeklyReviews||[];DB.maintenanceAudit=DB.maintenanceAudit||[];render()}
 refresh().catch(e=>toast(e.message));
 // Sincronización entre usuarios: consulta cambios compartidos cada 15 segundos.
 setInterval(()=>{if(!document.hidden)refresh().catch(()=>{});},15000);
