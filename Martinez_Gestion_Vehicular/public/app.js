@@ -151,3 +151,99 @@ async function refresh(){DB=await api('/data');DB.weeklyReviews=DB.weeklyReviews
 refresh().catch(e=>toast(e.message));
 // Sincronización entre usuarios: consulta cambios compartidos cada 15 segundos.
 setInterval(()=>{if(!document.hidden)refresh().catch(()=>{});},15000);
+// ==========================================
+// NOTIFICACIONES PUSH - MARTÍNEZ VEHICULAR
+// ==========================================
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding)
+    .replace(/-/g, '+')
+    .replace(/_/g, '/');
+
+  const rawData = atob(base64);
+  return Uint8Array.from(
+    [...rawData].map(char => char.charCodeAt(0))
+  );
+}
+
+async function activarNotificaciones() {
+  const button = document.getElementById('enableNotifications');
+
+  try {
+    if (button) {
+      button.disabled = true;
+      button.textContent = 'Activando...';
+    }
+
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      throw new Error('Tu navegador no admite notificaciones push.');
+    }
+
+    const permission = await Notification.requestPermission();
+
+    if (permission !== 'granted') {
+      throw new Error('Debes permitir las notificaciones en el navegador.');
+    }
+
+    const keyResponse = await fetch(`${API_BASE}/api/push/public-key`);
+    const keyData = await keyResponse.json();
+
+    if (!keyResponse.ok || !keyData.publicKey) {
+      throw new Error(keyData.error || 'No se pudo obtener la clave pública.');
+    }
+
+    const registration = await navigator.serviceWorker.register('/service-worker.js');
+
+    let subscription = await registration.pushManager.getSubscription();
+
+    if (!subscription) {
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(keyData.publicKey)
+      });
+    }
+
+    const response = await fetch(`${API_BASE}/api/push/subscribe`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        subscription: subscription.toJSON(),
+        responsibleName: 'Administrador'
+      })
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || 'No se pudo registrar este dispositivo.');
+    }
+
+    if (button) {
+      button.textContent = '🔔 Notificaciones activadas';
+    }
+
+    alert(result.message || '¡Notificaciones activadas correctamente!');
+
+  } catch (error) {
+    console.error('Error al activar notificaciones:', error);
+    alert(error.message || 'Ocurrió un error al activar las notificaciones.');
+
+    if (button) {
+      button.textContent = '🔔 Activar notificaciones';
+    }
+
+  } finally {
+    if (button) button.disabled = false;
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const button = document.getElementById('enableNotifications');
+
+  if (button) {
+    button.addEventListener('click', activarNotificaciones);
+  }
+});
