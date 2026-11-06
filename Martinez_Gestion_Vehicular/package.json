@@ -1,8 +1,8 @@
 {
   "name": "martinez-gestion-vehicular",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
-  "description": "Sistema de mantenimiento y control documental de flota - Funeraria Martinez",
+  "description": "Gestión vehicular con historial técnico integrado",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
