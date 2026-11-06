@@ -73,6 +73,7 @@ function initialData() {
 
   return {
     vehicles,
+    maintenanceAudit: [],
     maintenances: [
       { id: 'm-demo-1', vehicleId: 'v-demo-1', type: 'Cambio de aceite', date: '2026-10-20', km: 10000, description: 'Cambio de aceite y filtros', provider: 'Taller Central', cost: 680, parts: 'Aceite y filtro', nextKm: 15000 },
       { id: 'm-demo-2', vehicleId: 'v-demo-3', type: 'Preventivo', date: '2026-09-30', km: 10000, description: 'Chequeo preventivo general', provider: 'Servicio Automotriz', cost: 420, parts: 'Revisión general', nextKm: 15000 }
@@ -110,6 +111,8 @@ function saveLocal() {
 async function initDb() {
   if (!process.env.DATABASE_URL) {
     loadLocal();
+    local.maintenanceAudit = local.maintenanceAudit || [];
+    local.maintenances = local.maintenances || [];
     local.vehicles.forEach(v => syncOilForVehicle(local, v.id));
     saveLocal();
     console.log('Usando almacenamiento local JSON');
@@ -156,6 +159,8 @@ async function initDb() {
     await pool.query('INSERT INTO app_state(id,payload) VALUES(1,$1)', [JSON.stringify(initialData())]);
   } else {
     const data = result.rows[0].payload;
+    data.maintenanceAudit = data.maintenanceAudit || [];
+    data.maintenances = data.maintenances || [];
     (data.vehicles || []).forEach(v => syncOilForVehicle(data, v.id));
     await writeData(data);
   }
@@ -183,13 +188,17 @@ async function writeData(data) {
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 const num = v => Number.isFinite(Number(v)) ? Number(v) : 0;
 const clean = s => String(s ?? '').trim();
+function auditMaintenance(data, action, record, summary, before = null) {
+  data.maintenanceAudit = data.maintenanceAudit || [];
+  data.maintenanceAudit.unshift({ id: uid(), vehicleId: record.vehicleId, maintenanceId: record.id, action, summary, actor: 'Usuario del sistema', at: new Date().toISOString(), before: before ? { ...before } : null, after: action === 'ANULADO' ? null : { ...record } });
+}
 
 function syncOilForVehicle(data, vehicleId) {
   const v = data.vehicles.find(x => String(x.id) === String(vehicleId));
   if (!v) return;
 
   const history = (data.maintenances || [])
-    .filter(m => String(m.vehicleId) === String(vehicleId) && String(m.type || '').toLowerCase().includes('aceite'))
+    .filter(m => String(m.vehicleId) === String(vehicleId) && m.status !== 'Anulado' && String(m.type || '').toLowerCase().includes('aceite'))
     .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')) || num(b.km) - num(a.km));
 
   const latest = history[0];
@@ -205,6 +214,7 @@ function syncOilForVehicle(data, vehicleId) {
     v.oilNextKm = v.oilLastKm + v.oilInterval;
   }
 }
+
 /* =========================
    NOTIFICACIONES PUSH
 ========================= */
@@ -497,7 +507,6 @@ app.put('/api/vehicles/:id', async (req, res) => {
       active: b.active === undefined ? old.active : !!b.active
     };
 
-    syncOilForVehicle(d, d.vehicles[i].id);
     await writeData(d);
     res.json(d.vehicles[i]);
   } catch (e) {
@@ -509,22 +518,25 @@ app.delete('/api/vehicles/:id', async (req, res) => {
   try {
     const d = await readData();
     const id = req.params.id;
-    d.vehicles = d.vehicles.filter(v => String(v.id) !== id);
-    d.maintenances = d.maintenances.filter(x => String(x.vehicleId) !== id);
-    d.documents = d.documents.filter(x => String(x.vehicleId) !== id);
-    d.observations = d.observations.filter(x => String(x.vehicleId) !== id);
-    d.weeklyReviews = d.weeklyReviews.filter(x => String(x.vehicleId) !== id);
+    const v = d.vehicles.find(x => String(x.id) === id);
+    if (!v) return res.status(404).json({ error: 'No encontrado' });
+
+    d.vehicles = d.vehicles.filter(x => String(x.id) !== id);
+    for (const k of ['maintenances', 'documents', 'observations', 'weeklyReviews']) {
+      d[k] = (d[k] || []).filter(x => String(x.vehicleId) !== id);
+    }
+
     await writeData(d);
     res.json({ ok: true });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
 });
+
 app.post('/api/maintenances', async (req, res) => {
   try {
     const d = await readData();
     const b = req.body;
-
     if (!b.vehicleId || !clean(b.type) || !b.date) {
       return res.status(400).json({ error: 'Completa vehículo, tipo y fecha.' });
     }
@@ -539,12 +551,21 @@ app.post('/api/maintenances', async (req, res) => {
       provider: clean(b.provider),
       cost: num(b.cost),
       parts: clean(b.parts),
+      category: clean(b.category) || 'Mantenimiento',
+      driverName: clean(b.driverName),
+      technicianName: clean(b.technicianName),
+      laborCost: num(b.laborCost),
+      partsCost: num(b.partsCost),
+      costTotal: b.costTotal !== undefined ? num(b.costTotal) : num(b.cost) + num(b.laborCost) + num(b.partsCost),
+      status: clean(b.status) || 'Completado',
       nextDate: b.nextDate || null,
       nextKm: num(b.nextKm),
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     };
 
     d.maintenances.unshift(m);
+    auditMaintenance(d, 'CREADO', m, `${m.category}: ${m.type} · Conductor: ${m.driverName || 'No consignado'}`);
     const v = d.vehicles.find(x => String(x.id) === String(m.vehicleId));
 
     if (v) {
@@ -575,10 +596,10 @@ app.put('/api/maintenances/:id', async (req, res) => {
   try {
     const d = await readData();
     const i = d.maintenances.findIndex(x => String(x.id) === req.params.id);
-
     if (i < 0) return res.status(404).json({ error: 'Registro no encontrado' });
 
     const previous = d.maintenances[i];
+    const before = { ...previous };
     const b = req.body;
 
     d.maintenances[i] = {
@@ -592,10 +613,19 @@ app.put('/api/maintenances/:id', async (req, res) => {
       nextKm: num(b.nextKm),
       description: clean(b.description),
       provider: clean(b.provider),
-      parts: clean(b.parts)
+      parts: clean(b.parts),
+      category: clean(b.category ?? previous.category) || 'Mantenimiento',
+      driverName: clean(b.driverName ?? previous.driverName),
+      technicianName: clean(b.technicianName ?? previous.technicianName),
+      laborCost: num(b.laborCost ?? previous.laborCost),
+      partsCost: num(b.partsCost ?? previous.partsCost),
+      costTotal: b.costTotal !== undefined ? num(b.costTotal) : num(b.cost ?? previous.cost) + num(b.laborCost ?? previous.laborCost) + num(b.partsCost ?? previous.partsCost),
+      status: clean(b.status ?? previous.status) || 'Completado',
+      updatedAt: new Date().toISOString()
     };
 
     const m = d.maintenances[i];
+    auditMaintenance(d, 'EDITADO', m, `Se actualizaron datos de ${m.type}`, before);
 
     if (String(previous.vehicleId) !== String(m.vehicleId)) {
       syncOilForVehicle(d, previous.vehicleId);
@@ -605,7 +635,6 @@ app.put('/api/maintenances/:id', async (req, res) => {
 
     if (m.type.toLowerCase().includes('preventivo')) {
       const v = d.vehicles.find(x => String(x.id) === String(m.vehicleId));
-
       if (v) {
         v.preventiveLastKm = m.km;
         v.preventiveInterval = num(v.preventiveInterval) || 5000;
@@ -625,29 +654,26 @@ app.delete('/api/maintenances/:id', async (req, res) => {
   try {
     const d = await readData();
     const old = d.maintenances.find(x => String(x.id) === req.params.id);
-
-    d.maintenances = d.maintenances.filter(x => String(x.id) !== req.params.id);
-
-    if (old) syncOilForVehicle(d, old.vehicleId);
-
+    if (!old) return res.status(404).json({ error: 'Registro no encontrado' });
+    const before = { ...old };
+    old.status = 'Anulado';
+    old.cancelledAt = new Date().toISOString();
+    old.updatedAt = old.cancelledAt;
+    auditMaintenance(d, 'ANULADO', old, `Se anuló la intervención ${old.type}`, before);
+    if (String(old.type || '').toLowerCase().includes('aceite')) syncOilForVehicle(d, old.vehicleId);
     await writeData(d);
-    res.json({ ok: true });
+    res.json({ ok: true, message: 'Registro anulado y conservado en el historial.' });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
 });
 
-/* DOCUMENTOS */
-
 app.post('/api/documents', async (req, res) => {
   try {
     const d = await readData();
     const b = req.body;
-
     if (!b.vehicleId || !clean(b.type) || !b.expiryDate) {
-      return res.status(400).json({
-        error: 'Completa vehículo, documento y vencimiento.'
-      });
+      return res.status(400).json({ error: 'Completa vehículo, documento y vencimiento.' });
     }
 
     const doc = {
@@ -663,7 +689,6 @@ app.post('/api/documents', async (req, res) => {
 
     d.documents.unshift(doc);
     await writeData(d);
-
     res.status(201).json(doc);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -674,7 +699,6 @@ app.put('/api/documents/:id', async (req, res) => {
   try {
     const d = await readData();
     const i = d.documents.findIndex(x => String(x.id) === req.params.id);
-
     if (i < 0) return res.status(404).json({ error: 'Documento no encontrado' });
 
     d.documents[i] = {
@@ -694,9 +718,7 @@ app.put('/api/documents/:id', async (req, res) => {
 app.delete('/api/documents/:id', async (req, res) => {
   try {
     const d = await readData();
-
     d.documents = d.documents.filter(x => String(x.id) !== req.params.id);
-
     await writeData(d);
     res.json({ ok: true });
   } catch (e) {
@@ -704,16 +726,11 @@ app.delete('/api/documents/:id', async (req, res) => {
   }
 });
 
-/* OBSERVACIONES */
-
 app.post('/api/observations', async (req, res) => {
   try {
     const d = await readData();
     const b = req.body;
-
-    if (!b.vehicleId || !clean(b.text)) {
-      return res.status(400).json({ error: 'Escribe la observación.' });
-    }
+    if (!b.vehicleId || !clean(b.text)) return res.status(400).json({ error: 'Escribe la observación.' });
 
     const o = {
       id: uid(),
@@ -727,7 +744,6 @@ app.post('/api/observations', async (req, res) => {
 
     d.observations.unshift(o);
     await writeData(d);
-
     res.status(201).json(o);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -738,13 +754,9 @@ app.put('/api/observations/:id', async (req, res) => {
   try {
     const d = await readData();
     const o = d.observations.find(x => String(x.id) === req.params.id);
-
     if (!o) return res.status(404).json({ error: 'Observación no encontrada' });
 
-    Object.assign(o, req.body, {
-      text: clean(req.body.text ?? o.text)
-    });
-
+    Object.assign(o, req.body, { text: clean(req.body.text) });
     await writeData(d);
     res.json(o);
   } catch (e) {
@@ -756,11 +768,9 @@ app.patch('/api/observations/:id', async (req, res) => {
   try {
     const d = await readData();
     const o = d.observations.find(x => String(x.id) === req.params.id);
-
     if (!o) return res.status(404).json({ error: 'No encontrada' });
 
     o.status = req.body.status || o.status;
-
     await writeData(d);
     res.json(o);
   } catch (e) {
@@ -771,9 +781,7 @@ app.patch('/api/observations/:id', async (req, res) => {
 app.delete('/api/observations/:id', async (req, res) => {
   try {
     const d = await readData();
-
     d.observations = d.observations.filter(x => String(x.id) !== req.params.id);
-
     await writeData(d);
     res.json({ ok: true });
   } catch (e) {
@@ -781,16 +789,11 @@ app.delete('/api/observations/:id', async (req, res) => {
   }
 });
 
-/* REVISIONES SEMANALES */
-
 app.post('/api/weekly-reviews', async (req, res) => {
   try {
     const d = await readData();
     const b = req.body;
-
-    if (!b.vehicleId || !b.date) {
-      return res.status(400).json({ error: 'Selecciona vehículo y fecha.' });
-    }
+    if (!b.vehicleId || !b.date) return res.status(400).json({ error: 'Selecciona vehículo y fecha.' });
 
     const review = {
       id: uid(),
@@ -807,23 +810,9 @@ app.post('/api/weekly-reviews', async (req, res) => {
       createdAt: new Date().toISOString()
     };
 
-    review.result = [
-      review.tires,
-      review.brakes,
-      review.lights,
-      review.fluids,
-      review.cleaning,
-      review.documents
-    ].some(x => x === 'Deficiente')
+    review.result = [review.tires, review.brakes, review.lights, review.fluids, review.cleaning, review.documents].some(x => x === 'Deficiente')
       ? 'Requiere atención'
-      : [
-          review.tires,
-          review.brakes,
-          review.lights,
-          review.fluids,
-          review.cleaning,
-          review.documents
-        ].every(x => x === 'Correcto')
+      : [review.tires, review.brakes, review.lights, review.fluids, review.cleaning, review.documents].every(x => x === 'Correcto')
         ? 'Conforme'
         : 'Observaciones';
 
@@ -831,10 +820,7 @@ app.post('/api/weekly-reviews', async (req, res) => {
     d.weeklyReviews.unshift(review);
 
     const v = d.vehicles.find(x => String(x.id) === String(review.vehicleId));
-
-    if (v && review.km > num(v.currentKm)) {
-      v.currentKm = review.km;
-    }
+    if (v && review.km > num(v.currentKm)) v.currentKm = review.km;
 
     await writeData(d);
     res.status(201).json(review);
@@ -842,48 +828,26 @@ app.post('/api/weekly-reviews', async (req, res) => {
     res.status(500).json({ error: e.message });
   }
 });
+
 app.put('/api/weekly-reviews/:id', async (req, res) => {
   try {
     const d = await readData();
-
-    const i = (d.weeklyReviews || []).findIndex(
-      x => String(x.id) === req.params.id
-    );
-
-    if (i < 0) {
-      return res.status(404).json({ error: 'Revisión no encontrada' });
-    }
+    const i = (d.weeklyReviews || []).findIndex(x => String(x.id) === req.params.id);
+    if (i < 0) return res.status(404).json({ error: 'Revisión no encontrada' });
 
     const b = req.body;
     const r = { ...d.weeklyReviews[i], ...b, km: num(b.km) };
 
-    r.result = [
-      r.tires,
-      r.brakes,
-      r.lights,
-      r.fluids,
-      r.cleaning,
-      r.documents
-    ].some(x => x === 'Deficiente')
+    r.result = [r.tires, r.brakes, r.lights, r.fluids, r.cleaning, r.documents].some(x => x === 'Deficiente')
       ? 'Requiere atención'
-      : [
-          r.tires,
-          r.brakes,
-          r.lights,
-          r.fluids,
-          r.cleaning,
-          r.documents
-        ].every(x => x === 'Correcto')
+      : [r.tires, r.brakes, r.lights, r.fluids, r.cleaning, r.documents].every(x => x === 'Correcto')
         ? 'Conforme'
         : 'Observaciones';
 
     d.weeklyReviews[i] = r;
 
     const v = d.vehicles.find(x => String(x.id) === String(r.vehicleId));
-
-    if (v) {
-      v.currentKm = Math.max(num(v.currentKm), num(r.km));
-    }
+    if (v) v.currentKm = Math.max(num(v.currentKm), num(r.km));
 
     await writeData(d);
     res.json(r);
@@ -895,11 +859,7 @@ app.put('/api/weekly-reviews/:id', async (req, res) => {
 app.delete('/api/weekly-reviews/:id', async (req, res) => {
   try {
     const d = await readData();
-
-    d.weeklyReviews = (d.weeklyReviews || []).filter(
-      x => String(x.id) !== req.params.id
-    );
-
+    d.weeklyReviews = (d.weeklyReviews || []).filter(x => String(x.id) !== req.params.id);
     await writeData(d);
     res.json({ ok: true });
   } catch (e) {
@@ -907,68 +867,46 @@ app.delete('/api/weekly-reviews/:id', async (req, res) => {
   }
 });
 
-/* EXPORTACIÓN A EXCEL */
-
 app.get('/api/export/excel', async (req, res) => {
   try {
     const XLSX = require('xlsx');
     const d = await readData();
 
-    const oil = (d.vehicles || [])
-      .filter(v => v.active)
-      .map(v => {
-        const remaining = num(v.oilNextKm) - num(v.currentKm);
-
-        const state =
-          remaining <= 100 ? 'CAMBIO URGENTE' :
-          remaining <= 500 ? 'PRONTO CAMBIO' :
-          remaining <= 1500 ? 'EN VIGILANCIA' :
-          'NO URGENTE';
-
-        return {
-          'VEHÍCULO': v.name,
-          'PLACA': v.plate || '',
-          'ÚLTIMO CAMBIO': v.oilLastDate || '',
-          'KM ÚLTIMO CAMBIO': num(v.oilLastKm),
-          'KM ACTUAL': num(v.currentKm),
-          'INTERVALO (KM)': num(v.oilInterval) || 5000,
-          'PRÓXIMO CAMBIO': num(v.oilNextKm),
-          'KM RESTANTES': remaining,
-          'ESTADO': state
-        };
-      });
-
-    const weekly = (d.weeklyReviews || []).map(r => {
-      const v = (d.vehicles || []).find(
-        x => String(x.id) === String(r.vehicleId)
-      );
+    const oil = (d.vehicles || []).filter(v => v.active).map(v => {
+      const remaining = num(v.oilNextKm) - num(v.currentKm);
+      const state = remaining <= 100 ? 'CAMBIO URGENTE' : remaining <= 500 ? 'PRONTO CAMBIO' : remaining <= 1500 ? 'EN VIGILANCIA' : 'NO URGENTE';
 
       return {
-        'FECHA': r.date,
-        'VEHÍCULO': v?.name || '',
-        'PLACA': v?.plate || '',
-        'KILOMETRAJE': num(r.km),
-        'NEUMÁTICOS': r.tires,
-        'FRENOS': r.brakes,
-        'LUCES': r.lights,
-        'NIVELES': r.fluids,
-        'LIMPIEZA': r.cleaning,
-        'DOCUMENTOS': r.documents,
-        'RESULTADO': r.result,
-        'OBSERVACIONES': r.notes || ''
+        'VEHÍCULO': v.name,
+        'PLACA': v.plate || '',
+        'ÚLTIMO CAMBIO': v.oilLastDate || '',
+        'KM ÚLTIMO CAMBIO': num(v.oilLastKm),
+        'KM ACTUAL': num(v.currentKm),
+        'INTERVALO (KM)': num(v.oilInterval) || 5000,
+        'PRÓXIMO CAMBIO': num(v.oilNextKm),
+        'KM RESTANTES': remaining,
+        'ESTADO': state
       };
     });
 
+    const weekly = (d.weeklyReviews || []).map(r => ({
+      'FECHA': r.date,
+      'VEHÍCULO': (d.vehicles || []).find(v => String(v.id) === String(r.vehicleId))?.name || '',
+      'PLACA': (d.vehicles || []).find(v => String(v.id) === String(r.vehicleId))?.plate || '',
+      'KILOMETRAJE': num(r.km),
+      'NEUMÁTICOS': r.tires,
+      'FRENOS': r.brakes,
+      'LUCES': r.lights,
+      'NIVELES': r.fluids,
+      'LIMPIEZA': r.cleaning,
+      'DOCUMENTOS': r.documents,
+      'RESULTADO': r.result,
+      'OBSERVACIONES': r.notes || ''
+    }));
+
     const wb = XLSX.utils.book_new();
-
     const ws = XLSX.utils.json_to_sheet(oil);
-
-    ws['!cols'] = [
-      { wch: 22 }, { wch: 14 }, { wch: 15 },
-      { wch: 18 }, { wch: 14 }, { wch: 15 },
-      { wch: 17 }, { wch: 15 }, { wch: 20 }
-    ];
-
+    ws['!cols'] = [{ wch: 22 }, { wch: 14 }, { wch: 15 }, { wch: 18 }, { wch: 14 }, { wch: 15 }, { wch: 17 }, { wch: 15 }, { wch: 20 }];
     XLSX.utils.book_append_sheet(wb, ws, 'Control de aceite');
 
     const summary = [
@@ -989,51 +927,45 @@ app.get('/api/export/excel', async (req, res) => {
 
     const sm = XLSX.utils.aoa_to_sheet(summary);
     sm['!cols'] = [{ wch: 42 }, { wch: 28 }];
-
     XLSX.utils.book_append_sheet(wb, sm, 'Resumen y semáforo');
 
     const ww = XLSX.utils.json_to_sheet(weekly);
     XLSX.utils.book_append_sheet(wb, ww, 'Revisión semanal');
 
-    const buffer = XLSX.write(wb, {
-      type: 'buffer',
-      bookType: 'xlsx'
-    });
+    const historyRows = (d.maintenances || []).map(m => ({
+      'FECHA': m.date || '', 'VEHÍCULO': (d.vehicles || []).find(v => String(v.id) === String(m.vehicleId))?.name || '',
+      'PLACA': (d.vehicles || []).find(v => String(v.id) === String(m.vehicleId))?.plate || '',
+      'CLASE': m.category || 'Mantenimiento', 'TRABAJO': m.type || '', 'KM': num(m.km),
+      'CONDUCTOR': m.driverName || '', 'TALLER': m.provider || '', 'TÉCNICO': m.technicianName || '',
+      'REPUESTOS': m.parts || '', 'MANO DE OBRA': num(m.laborCost), 'REPUESTOS S/': num(m.partsCost),
+      'OTROS S/': num(m.cost), 'TOTAL S/': num(m.costTotal ?? m.cost), 'ESTADO': m.status || 'Completado',
+      'DETALLE': m.description || ''
+    }));
+    const wh = XLSX.utils.json_to_sheet(historyRows);
+    XLSX.utils.book_append_sheet(wb, wh, 'Historial técnico');
 
-    res.setHeader(
-      'Content-Disposition',
-      'attachment; filename=Control_Flota_Martinez.xlsx'
-    );
+    const auditRows = (d.maintenanceAudit || []).map(a => ({ 'FECHA Y HORA': a.at || '', 'VEHÍCULO': (d.vehicles || []).find(v => String(v.id) === String(a.vehicleId))?.name || '', 'ACCIÓN': a.action, 'USUARIO': a.actor, 'DETALLE': a.summary }));
+    const wa = XLSX.utils.json_to_sheet(auditRows);
+    XLSX.utils.book_append_sheet(wb, wa, 'Auditoría');
 
-    res.setHeader(
-      'Content-Type',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    );
-
+    const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+    res.setHeader('Content-Disposition', 'attachment; filename=Control_Flota_Martinez.xlsx');
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.send(buffer);
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
 });
 
-/* EXPORTACIÓN DE RESPALDO JSON */
-
 app.get('/api/export', async (req, res) => {
   try {
     const d = await readData();
-
-    res.setHeader(
-      'Content-Disposition',
-      'attachment; filename=martinez-gestion-vehicular.json'
-    );
-
+    res.setHeader('Content-Disposition', 'attachment; filename=martinez-gestion-vehicular.json');
     res.json(d);
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
 });
-
-/* INICIO DEL SERVIDOR */
 
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -1044,11 +976,12 @@ initDb()
     app.listen(PORT, () => {
       console.log(`MARTÍNEZ Gestión Vehicular en puerto ${PORT}`);
 
+      // Revisión automática cada 30 minutos. También se ejecuta al iniciar.
       checkAutomaticAlerts();
       setInterval(checkAutomaticAlerts, 30 * 60 * 1000);
     });
   })
   .catch(e => {
-    console.error('Error iniciando el servidor:', e);
+    console.error(e);
     process.exit(1);
   });
