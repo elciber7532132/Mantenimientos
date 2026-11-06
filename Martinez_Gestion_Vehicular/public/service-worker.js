@@ -1,50 +1,39 @@
 self.addEventListener('push', event => {
   let data = {};
-
   try {
     data = event.data ? event.data.json() : {};
-  } catch {
-    data = {
-      title: 'MARTÍNEZ | Gestión Vehicular',
-      body: event.data ? event.data.text() : 'Tienes una nueva alerta.'
-    };
+  } catch (_) {
+    data = { body: event.data ? event.data.text() : '' };
   }
-
-  const title = data.title || 'MARTÍNEZ | Gestión Vehicular';
-
-  const options = {
-    body: data.body || data.message || 'Hay una alerta pendiente en la flota.',
-    icon: '/icon-192.png',
-    badge: '/icon-192.png',
-    tag: data.tag || 'martinez-alerta',
-    renotify: true,
-    data: {
-      url: data.url || '/'
+  event.waitUntil(self.registration.showNotification(
+    data.title || 'MARTÍNEZ Gestión Vehicular',
+    {
+      body: data.body || 'Tienes una alerta pendiente de la flota.',
+      data: { url: data.url || '/' },
+      tag: data.tag || 'martinez-alerta',
+      renotify: false
     }
-  };
-
-  event.waitUntil(
-    self.registration.showNotification(title, options)
-  );
+  ));
 });
 
 self.addEventListener('notificationclick', event => {
   event.notification.close();
-
-  const destination = event.notification.data?.url || '/';
-
-  event.waitUntil(
-    clients.matchAll({
+  const target = new URL(
+    event.notification.data?.url || '/',
+    self.location.origin
+  ).href;
+  event.waitUntil((async () => {
+    const openClients = await clients.matchAll({
       type: 'window',
       includeUncontrolled: true
-    }).then(windowClients => {
-      for (const client of windowClients) {
-        if ('focus' in client) {
-          return client.focus();
-        }
+    });
+    for (const client of openClients) {
+      if (client.url.startsWith(self.location.origin)) {
+        await client.focus();
+        if (client.navigate) await client.navigate(target);
+        return;
       }
-
-      return clients.openWindow(destination);
-    })
-  );
+    }
+    if (clients.openWindow) await clients.openWindow(target);
+  })());
 });
