@@ -6,3 +6,9 @@
 .pill.yellow{background:#fff7cc;color:#8a6900}.pill.orange{background:#ffead8;color:#b85a13}.oil-legend{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:0 0 15px}.oil-legend>div{background:#fff;border:1px solid var(--line);border-radius:9px;padding:12px;display:grid;grid-template-columns:12px 1fr;column-gap:8px;align-items:center}.oil-legend i{width:11px;height:11px;border-radius:3px;grid-row:span 2}.oil-legend i.green{background:#13a66b}.oil-legend i.yellow{background:#f2d000}.oil-legend i.orange{background:#f28a24}.oil-legend i.red{background:#e43c3c}.oil-legend b{font-size:11px}.oil-legend span{font-size:10px;color:var(--muted);margin-top:3px}.oil-legend>div:has(.green){border-left:4px solid #13a66b}.oil-legend>div:has(.yellow){border-left:4px solid #f2d000}.oil-legend>div:has(.orange){border-left:4px solid #f28a24}.oil-legend>div:has(.red){border-left:4px solid #e43c3c}
 @media(max-width:850px){.oil-legend{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:480px){.oil-legend{grid-template-columns:1fr}}
+
+/* Historial técnico */
+.history-filters{grid-template-columns:minmax(220px,2fr) repeat(3,minmax(160px,1fr));}
+.history-audit{margin-top:22px;}
+@media(max-width:900px){.history-filters{grid-template-columns:1fr 1fr;}}
+@media(max-width:560px){.history-filters{grid-template-columns:1fr;}}
