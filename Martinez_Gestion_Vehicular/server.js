@@ -88,7 +88,7 @@ function initialData() {
       { id: 'w-demo-1', vehicleId: 'v-demo-1', date: '2026-11-02', km: 11500, tires: 'Correcto', brakes: 'Correcto', lights: 'Correcto', fluids: 'Correcto', cleaning: 'Correcto', documents: 'Correcto', notes: 'Unidad operativa.', result: 'Conforme' },
       { id: 'w-demo-2', vehicleId: 'v-demo-2', date: '2026-11-02', km: 13800, tires: 'Deficiente', brakes: 'Correcto', lights: 'Correcto', fluids: 'Correcto', cleaning: 'Correcto', documents: 'Correcto', notes: 'Revisar neumático delantero derecho.', result: 'Requiere atención' }
     ],
-    settings: { alertDays: 30, kmWarning: 500 },
+    settings: { alertDays: 30, kmWarning: 500, oilIntervalKm: 5000, greenMinKm: 1500, yellowMinKm: 500, orangeMinKm: 100 },
     demoData: true
   };
 }
@@ -459,7 +459,7 @@ app.post('/api/vehicles', async (req, res) => {
     const b = req.body;
     if (!clean(b.name)) return res.status(400).json({ error: 'El nombre del vehículo es obligatorio.' });
 
-    const interval = num(b.oilInterval) || 5000;
+    const interval = num(b.oilInterval) || num(d.settings?.oilIntervalKm) || 5000;
     const lastKm = num(b.oilLastKm);
     const v = {
       id: uid(),
@@ -501,7 +501,7 @@ app.put('/api/vehicles/:id', async (req, res) => {
       name: clean(b.name ?? old.name),
       plate: clean(b.plate ?? old.plate).toUpperCase(),
       currentKm: num(b.currentKm ?? old.currentKm),
-      oilInterval: num(b.oilInterval ?? old.oilInterval) || 5000,
+      oilInterval: num(b.oilInterval ?? old.oilInterval) || num(d.settings?.oilIntervalKm) || 5000,
       oilNextKm: num(b.oilLastKm ?? old.oilLastKm) + (num(b.oilInterval ?? old.oilInterval) || 5000),
       oilIntervalMonths: num(b.oilIntervalMonths ?? old.oilIntervalMonths ?? 6),
       active: b.active === undefined ? old.active : !!b.active
