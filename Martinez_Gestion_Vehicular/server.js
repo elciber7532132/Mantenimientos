@@ -497,7 +497,7 @@ async function checkAutomaticAlerts() {
 }
 
 app.get('/api/health', (req, res) => {
-  res.json({ ok: true, service: 'Martinez Gestion Vehicular' });
+  res.json({ ok: true, service: 'Martinez Gestion Vehicular', version: '1.3.1' });
 });
 
 app.get('/api/push/public-key', (req, res) => {
