@@ -88,7 +88,7 @@ function initialData() {
       { id: 'w-demo-1', vehicleId: 'v-demo-1', date: '2026-11-02', km: 11500, tires: 'Correcto', brakes: 'Correcto', lights: 'Correcto', fluids: 'Correcto', cleaning: 'Correcto', documents: 'Correcto', notes: 'Unidad operativa.', result: 'Conforme' },
       { id: 'w-demo-2', vehicleId: 'v-demo-2', date: '2026-11-02', km: 13800, tires: 'Deficiente', brakes: 'Correcto', lights: 'Correcto', fluids: 'Correcto', cleaning: 'Correcto', documents: 'Correcto', notes: 'Revisar neumático delantero derecho.', result: 'Requiere atención' }
     ],
-    settings: { alertDays: 30, kmWarning: 500, oilIntervalKm: 5000, greenMinKm: 1500, yellowMinKm: 500, orangeMinKm: 100 },
+    settings: { alertDays: 30, kmWarning: 500, oilIntervalKm: 5000, greenMinKm: 1500, yellowMinKm: 500, orangeMinKm: 100, earlyOilChangeRestartsCycle: false },
     demoData: true
   };
 }
@@ -192,10 +192,21 @@ const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 
 const num = v => Number.isFinite(Number(v)) ? Number(v) : 0;
 const clean = s => String(s ?? '').trim();
 function auditMaintenance(data, action, record, detail='') {
+  const isOil = String(record.type || '').toLowerCase().includes('aceite');
+  logActivity(data, action, record.vehicleId, detail || `${record.type || ''} · Chofer: ${record.driverName || 'No indicado'} · Taller: ${record.provider || 'No indicado'}`, isOil ? 'Aceite' : 'Mantenimiento');
+}
+
+// Bitácora única de TODO lo que se hace en el sistema (se guarda dentro de data.maintenanceAudit).
+function logActivity(data, action, vehicleId, detail, area = 'General') {
   data.maintenanceAudit = data.maintenanceAudit || [];
-  const v = (data.vehicles || []).find(x => String(x.id) === String(record.vehicleId));
-  data.maintenanceAudit.unshift({ id: uid(), at: new Date().toISOString(), action, vehicleName: v ? `${v.name}${v.plate ? ' · '+v.plate : ''}` : 'Vehículo no disponible', detail: detail || `${record.type || ''} · Chofer: ${record.driverName || 'No indicado'} · Taller: ${record.provider || 'No indicado'}` });
-  data.maintenanceAudit = data.maintenanceAudit.slice(0, 500);
+  const v = (data.vehicles || []).find(x => String(x.id) === String(vehicleId));
+  data.maintenanceAudit.unshift({
+    id: uid(), at: new Date().toISOString(), action, area,
+    vehicleId: vehicleId ?? null,
+    vehicleName: v ? `${v.name}${v.plate ? ' · ' + v.plate : ''}` : 'General',
+    detail: detail || ''
+  });
+  data.maintenanceAudit = data.maintenanceAudit.slice(0, 3000);
 }
 
 function syncOilForVehicle(data, vehicleId) {
@@ -289,6 +300,60 @@ function ensureOilCycles(data) {
   }
 }
 
+
+// Aplica la configuración de aceite de un vehículo AL CICLO ACTIVO (que es lo que
+// lee el semáforo, las alertas y el Excel). Antes solo se tocaba el vehículo y el
+// ciclo seguía con los valores viejos, por eso "Configurar" no se reflejaba.
+function applyOilConfig(data, v, b) {
+  ensureOilCycles(data);
+  const cycle = data.oilCycles.find(c => String(c.vehicleId) === String(v.id) && c.status === 'En curso');
+  const has = k => b[k] !== undefined && b[k] !== null && b[k] !== '';
+  const interval = (has('oilInterval') ? num(b.oilInterval) : 0) || num(cycle?.intervalKm) || num(v.oilInterval) || num(data.settings?.oilIntervalKm) || 5000;
+  const lastKm = has('oilLastKm') ? num(b.oilLastKm) : (cycle ? num(cycle.startKm) : num(v.oilLastKm));
+  const lastDate = has('oilLastDate') ? b.oilLastDate : null;
+  if (cycle) {
+    cycle.startKm = lastKm;
+    cycle.intervalKm = interval;
+    cycle.plannedKm = lastKm + interval;
+    if (lastDate) cycle.startDate = lastDate;
+    cycle.editedAt = new Date().toISOString();
+    (data.maintenances || []).forEach(m => { if (m.oilCycleId === cycle.id) m.nextKm = cycle.plannedKm; });
+  }
+  const before = { km: num(v.oilLastKm), interval: num(v.oilInterval) };
+  v.oilInterval = interval;
+  v.oilLastKm = lastKm;
+  v.oilNextKm = lastKm + interval;
+  if (lastDate) v.oilLastDate = lastDate;
+
+  // El último cambio configurado también queda en el historial de cambios de aceite.
+  if (cycle && lastKm > 0 && (lastDate || cycle.startDate)) {
+    const date = lastDate || cycle.startDate;
+    let rec = (data.maintenances || []).find(m => m.oilCycleId === cycle.id && m.initialRecord && m.status !== 'Anulado');
+    if (rec) { rec.date = date; rec.km = lastKm; rec.nextKm = cycle.plannedKm; }
+    else {
+      rec = { id: uid(), vehicleId: v.id, type: 'Cambio de aceite', date, km: lastKm,
+        description: 'Cambio que inicia el ciclo (registrado al configurar el control de aceite)', provider: '', cost: 0, parts: '',
+        workKind: 'Mantenimiento', driverName: '', technician: '', laborCost: 0, partsCost: 0, totalCost: 0,
+        status: 'Realizado', nextDate: null, nextKm: cycle.plannedKm, oilCycleId: cycle.id, initialRecord: true,
+        oilCycleAction: 'Inicio de ciclo', createdAt: new Date().toISOString() };
+      data.maintenances = data.maintenances || [];
+      data.maintenances.unshift(rec);
+    }
+  }
+  logActivity(data, 'CONFIGURACIÓN ACEITE', v.id, `Último cambio: ${before.km} → ${lastKm} km · Intervalo: ${before.interval} → ${interval} km · Próximo cambio: ${lastKm + interval} km${lastDate ? ' · Fecha: ' + lastDate : ''}`, 'Aceite');
+}
+
+// Si el servicio anulado había cerrado un ciclo, se reabre ese ciclo y se descarta el siguiente.
+function reopenCycleIfClosedBy(data, m) {
+  const closed = (data.oilCycles || []).find(c => c.maintenanceId === m.id && c.status === 'Cerrado');
+  if (!closed) return;
+  const next = data.oilCycles.find(c => String(c.vehicleId) === String(closed.vehicleId) && num(c.number) === num(closed.number) + 1);
+  if (next && next.status === 'En curso') data.oilCycles = data.oilCycles.filter(c => c.id !== next.id);
+  Object.assign(closed, { status: 'En curso', endDate: null, endKm: null, distanceKm: null, maintenanceId: null, closeReason: null, closedAt: null, provider: '', cost: 0, parts: '', notes: '' });
+  const v = data.vehicles.find(x => String(x.id) === String(closed.vehicleId));
+  if (v) syncOilForVehicle(data, v.id);
+}
+
 /* =========================
    NOTIFICACIONES PUSH
 ========================= */
@@ -371,12 +436,13 @@ async function checkAutomaticAlerts() {
   try {
     const data = await readData();
     const vehicles = (data.vehicles || []).filter(v => v.active !== false);
-    const kmWarning = Math.max(0, num(data.settings?.kmWarning) || 500);
+    const kmWarning = Math.max(0, num(data.settings?.yellowMinKm) || num(data.settings?.kmWarning) || 500);
     const alertDays = Math.max(0, num(data.settings?.alertDays) || 30);
 
     for (const vehicle of vehicles) {
       const currentKm = num(vehicle.currentKm);
-      const oilNextKm = num(vehicle.oilNextKm);
+      const oilCycle = (data.oilCycles || []).find(c => String(c.vehicleId) === String(vehicle.id) && c.status === 'En curso');
+      const oilNextKm = oilCycle ? num(oilCycle.plannedKm) : num(vehicle.oilNextKm);
       const oilRemaining = oilNextKm - currentKm;
 
       if (oilNextKm > 0 && oilRemaining <= kmWarning) {
@@ -519,7 +585,18 @@ app.get('/api/data', async (req, res) => {
 app.put('/api/settings', async (req, res) => {
   try {
     const d = await readData();
-    d.settings = { ...d.settings, ...req.body };
+    const b = req.body || {};
+    const next = { ...d.settings };
+    for (const k of ['alertDays', 'kmWarning', 'oilIntervalKm', 'greenMinKm', 'yellowMinKm', 'orangeMinKm']) {
+      if (b[k] !== undefined && b[k] !== '') next[k] = num(b[k]);
+    }
+    if (b.earlyOilChangeRestartsCycle !== undefined) next.earlyOilChangeRestartsCycle = !!b.earlyOilChangeRestartsCycle;
+    if (!(num(next.greenMinKm) > num(next.yellowMinKm) && num(next.yellowMinKm) > num(next.orangeMinKm) && num(next.orangeMinKm) >= 0)) {
+      return res.status(400).json({ error: 'Los rangos deben cumplir: verde > amarillo > naranja ≥ 0.' });
+    }
+    if (!(num(next.oilIntervalKm) > 0)) return res.status(400).json({ error: 'El intervalo debe ser mayor que 0.' });
+    d.settings = next;
+    logActivity(d, 'CONFIGURACIÓN', null, `Reglas de aceite: intervalo ${next.oilIntervalKm} km · verde > ${next.greenMinKm} · amarillo > ${next.yellowMinKm} · naranja > ${next.orangeMinKm}${next.earlyOilChangeRestartsCycle ? ' · cambio anticipado reinicia contador' : ''}.`, 'Aceite');
     await writeData(d);
     res.json(d.settings);
   } catch (e) {
@@ -554,6 +631,7 @@ app.post('/api/vehicles', async (req, res) => {
 
     d.vehicles.push(v);
     ensureOilCycles(d);
+    logActivity(d, 'CREACIÓN', v.id, `Vehículo registrado con ${v.currentKm} km.`, 'Vehículo');
     await writeData(d);
     res.status(201).json(v);
   } catch (e) {
@@ -576,11 +654,21 @@ app.put('/api/vehicles/:id', async (req, res) => {
       name: clean(b.name ?? old.name),
       plate: clean(b.plate ?? old.plate).toUpperCase(),
       currentKm: num(b.currentKm ?? old.currentKm),
-      oilInterval: num(b.oilInterval ?? old.oilInterval) || num(d.settings?.oilIntervalKm) || 5000,
-      oilNextKm: num(b.oilLastKm ?? old.oilLastKm) + (num(b.oilInterval ?? old.oilInterval) || 5000),
       oilIntervalMonths: num(b.oilIntervalMonths ?? old.oilIntervalMonths ?? 6),
       active: b.active === undefined ? old.active : !!b.active
     };
+
+    const nv = d.vehicles[i];
+    const hasOilData = ['oilLastKm', 'oilInterval', 'oilLastDate'].some(k => b[k] !== undefined && b[k] !== '');
+    if (hasOilData) {
+      if (b.oilLastKm !== undefined && b.oilLastKm !== '' && num(nv.currentKm) < num(b.oilLastKm)) {
+        d.vehicles[i] = old;
+        return res.status(400).json({ error: 'El kilometraje actual no puede ser menor al del último cambio de aceite.' });
+      }
+      applyOilConfig(d, nv, b);
+    }
+    if (old.active !== nv.active) logActivity(d, nv.active ? 'ACTIVACIÓN' : 'DESACTIVACIÓN', nv.id, `El vehículo fue ${nv.active ? 'activado' : 'desactivado'}.`, 'Vehículo');
+    else if (num(old.currentKm) !== num(nv.currentKm) || old.name !== nv.name || old.plate !== nv.plate) logActivity(d, 'EDICIÓN', nv.id, `Datos del vehículo actualizados. Km: ${num(old.currentKm)} → ${num(nv.currentKm)}.`, 'Vehículo');
 
     await writeData(d);
     res.json(d.vehicles[i]);
@@ -596,7 +684,17 @@ app.delete('/api/vehicles/:id', async (req, res) => {
     const v = d.vehicles.find(x => String(x.id) === id);
     if (!v) return res.status(404).json({ error: 'No encontrado' });
 
+    // Se conserva una copia del vehículo y de todos sus registros antes de eliminarlo.
+    d.archivedVehicles = d.archivedVehicles || [];
+    d.archivedVehicles.unshift({ archivedAt: new Date().toISOString(), vehicle: v,
+      maintenances: (d.maintenances || []).filter(x => String(x.vehicleId) === id),
+      weeklyReviews: (d.weeklyReviews || []).filter(x => String(x.vehicleId) === id),
+      observations: (d.observations || []).filter(x => String(x.vehicleId) === id),
+      documents: (d.documents || []).filter(x => String(x.vehicleId) === id),
+      oilCycles: (d.oilCycles || []).filter(x => String(x.vehicleId) === id) });
+    logActivity(d, 'ELIMINACIÓN', null, `Se eliminó el vehículo ${v.name}${v.plate ? ' · ' + v.plate : ''}. Sus registros se archivaron.`, 'Vehículo');
     d.vehicles = d.vehicles.filter(x => String(x.id) !== id);
+    d.oilCycles = (d.oilCycles || []).filter(x => String(x.vehicleId) !== id);
     for (const k of ['maintenances', 'documents', 'observations', 'weeklyReviews']) {
       d[k] = (d[k] || []).filter(x => String(x.vehicleId) !== id);
     }
@@ -646,7 +744,7 @@ app.post('/api/maintenances', async (req, res) => {
         m.oilCycleId = openCycle.id;
         m.nextKm = num(openCycle.plannedKm);
         // Un servicio anticipado queda en el historial, pero NO reinicia el ciclo.
-        if (m.km < num(openCycle.plannedKm)) {
+        if (m.km < num(openCycle.plannedKm) && !d.settings?.earlyOilChangeRestartsCycle) {
           m.oilCycleAction = 'Servicio anticipado · ciclo continúa';
         } else {
           // El ciclo solo se cierra cuando el servicio alcanza o supera el límite.
@@ -660,7 +758,7 @@ app.post('/api/maintenances', async (req, res) => {
           openCycle.parts = m.parts;
           openCycle.notes = m.description;
           openCycle.closedAt = new Date().toISOString();
-          openCycle.closeReason = m.km > num(openCycle.plannedKm) ? 'Servicio realizado después del límite' : 'Límite alcanzado';
+          openCycle.closeReason = m.km > num(openCycle.plannedKm) ? 'Servicio realizado después del límite' : m.km < num(openCycle.plannedKm) ? 'Cambio anticipado (reinicia el ciclo)' : 'Límite alcanzado';
 
           const nextCycle = { id: uid(), vehicleId: v.id, number: num(openCycle.number) + 1,
             startDate: m.date, startKm: m.km, plannedKm: m.km + intervalKm, endDate: null, endKm: null,
@@ -674,7 +772,7 @@ app.post('/api/maintenances', async (req, res) => {
     }
 
     d.maintenances.unshift(m);
-    auditMaintenance(d, 'CREACIÓN', m);
+    auditMaintenance(d, 'CREACIÓN', m, isOilService ? `Cambio de aceite a ${m.km} km · ${m.oilCycleAction || 'Registrado'} · Próximo: ${m.nextKm} km · Taller: ${m.provider || 'No indicado'}` : '');
 
     if (v) {
       v.currentKm = Math.max(num(v.currentKm), m.km);
@@ -768,6 +866,7 @@ app.delete('/api/maintenances/:id', async (req, res) => {
     if (!old) return res.status(404).json({ error: 'Registro no encontrado' });
     old.status = 'Anulado';
     old.annulledAt = new Date().toISOString();
+    reopenCycleIfClosedBy(d, old);
     auditMaintenance(d, 'ANULACIÓN', old, `Se anuló la intervención: ${old.type || ''}. El registro se conserva.`);
     await writeData(d);
     res.json({ ok: true, preserved: true });
@@ -796,6 +895,7 @@ app.post('/api/documents', async (req, res) => {
     };
 
     d.documents.unshift(doc);
+    logActivity(d, 'CREACIÓN', doc.vehicleId, `Documento ${doc.type}${doc.number ? ' ' + doc.number : ''} · vence ${doc.expiryDate}`, 'Documento');
     await writeData(d);
     res.status(201).json(doc);
   } catch (e) {
@@ -815,6 +915,7 @@ app.put('/api/documents/:id', async (req, res) => {
       number: clean(req.body.number),
       notes: clean(req.body.notes)
     };
+    logActivity(d, 'EDICIÓN', d.documents[i].vehicleId, `Documento ${d.documents[i].type} actualizado · vence ${d.documents[i].expiryDate}`, 'Documento');
 
     await writeData(d);
     res.json(d.documents[i]);
@@ -826,6 +927,8 @@ app.put('/api/documents/:id', async (req, res) => {
 app.delete('/api/documents/:id', async (req, res) => {
   try {
     const d = await readData();
+    const delDoc = d.documents.find(x => String(x.id) === req.params.id);
+    if (delDoc) logActivity(d, 'ELIMINACIÓN', delDoc.vehicleId, `Documento ${delDoc.type}${delDoc.number ? ' ' + delDoc.number : ''} eliminado (vencía ${delDoc.expiryDate}).`, 'Documento');
     d.documents = d.documents.filter(x => String(x.id) !== req.params.id);
     await writeData(d);
     res.json({ ok: true });
@@ -851,6 +954,7 @@ app.post('/api/observations', async (req, res) => {
     };
 
     d.observations.unshift(o);
+    logActivity(d, 'CREACIÓN', o.vehicleId, `Observación (${o.priority}): ${o.text}`, 'Observación');
     await writeData(d);
     res.status(201).json(o);
   } catch (e) {
@@ -865,6 +969,7 @@ app.put('/api/observations/:id', async (req, res) => {
     if (!o) return res.status(404).json({ error: 'Observación no encontrada' });
 
     Object.assign(o, req.body, { text: clean(req.body.text) });
+    logActivity(d, 'EDICIÓN', o.vehicleId, `Observación actualizada (${o.priority} · ${o.status}): ${o.text}`, 'Observación');
     await writeData(d);
     res.json(o);
   } catch (e) {
@@ -879,6 +984,7 @@ app.patch('/api/observations/:id', async (req, res) => {
     if (!o) return res.status(404).json({ error: 'No encontrada' });
 
     o.status = req.body.status || o.status;
+    logActivity(d, 'ESTADO', o.vehicleId, `Observación marcada como ${o.status}: ${o.text}`, 'Observación');
     await writeData(d);
     res.json(o);
   } catch (e) {
@@ -889,6 +995,8 @@ app.patch('/api/observations/:id', async (req, res) => {
 app.delete('/api/observations/:id', async (req, res) => {
   try {
     const d = await readData();
+    const delObs = d.observations.find(x => String(x.id) === req.params.id);
+    if (delObs) logActivity(d, 'ELIMINACIÓN', delObs.vehicleId, `Observación eliminada: ${delObs.text}`, 'Observación');
     d.observations = d.observations.filter(x => String(x.id) !== req.params.id);
     await writeData(d);
     res.json({ ok: true });
@@ -929,6 +1037,7 @@ app.post('/api/weekly-reviews', async (req, res) => {
 
     d.weeklyReviews = d.weeklyReviews || [];
     d.weeklyReviews.unshift(review);
+    logActivity(d, 'CREACIÓN', review.vehicleId, `Revisión semanal: ${review.result} · ${review.km} km${review.notes ? ' · ' + review.notes : ''}`, 'Revisión semanal');
 
     const v = d.vehicles.find(x => String(x.id) === String(review.vehicleId));
     if (v && review.km > num(v.currentKm)) v.currentKm = review.km;
@@ -956,6 +1065,7 @@ app.put('/api/weekly-reviews/:id', async (req, res) => {
         : 'Observaciones';
 
     d.weeklyReviews[i] = r;
+    logActivity(d, 'EDICIÓN', r.vehicleId, `Revisión semanal actualizada: ${r.result} · ${num(r.km)} km`, 'Revisión semanal');
 
     const v = d.vehicles.find(x => String(x.id) === String(r.vehicleId));
     if (v) v.currentKm = Math.max(num(v.currentKm), num(r.km));
@@ -970,6 +1080,8 @@ app.put('/api/weekly-reviews/:id', async (req, res) => {
 app.delete('/api/weekly-reviews/:id', async (req, res) => {
   try {
     const d = await readData();
+    const delRev = (d.weeklyReviews || []).find(x => String(x.id) === req.params.id);
+    if (delRev) logActivity(d, 'ELIMINACIÓN', delRev.vehicleId, `Revisión semanal del ${delRev.date} eliminada (${delRev.result}, ${num(delRev.km)} km).`, 'Revisión semanal');
     d.weeklyReviews = (d.weeklyReviews || []).filter(x => String(x.id) !== req.params.id);
     await writeData(d);
     res.json({ ok: true });
@@ -1069,6 +1181,11 @@ app.get('/api/export/excel', async (req, res) => {
     const os = XLSX.utils.json_to_sheet(oilServices);
     os['!cols'] = [{wch:14},{wch:22},{wch:14},{wch:10},{wch:16},{wch:22},{wch:14},{wch:28},{wch:35},{wch:14},{wch:20},{wch:38}];
     XLSX.utils.book_append_sheet(wb, os, 'Todos los cambios');
+
+    const act = (d.maintenanceAudit || []).map(a => ({ 'FECHA Y HORA': a.at || '', 'ÁREA': a.area || '', 'ACCIÓN': a.action || '', 'VEHÍCULO': a.vehicleName || '', 'DETALLE': a.detail || '' }));
+    const aw = XLSX.utils.json_to_sheet(act);
+    aw['!cols'] = [{wch:24},{wch:18},{wch:22},{wch:26},{wch:80}];
+    XLSX.utils.book_append_sheet(wb, aw, 'Actividad');
 
     const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
     res.setHeader('Content-Disposition', 'attachment; filename=Control_Flota_Martinez.xlsx');
