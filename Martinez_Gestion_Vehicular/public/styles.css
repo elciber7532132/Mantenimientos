@@ -12,3 +12,5 @@
 .history-audit{margin-top:22px;}
 @media(max-width:900px){.history-filters{grid-template-columns:1fr 1fr;}}
 @media(max-width:560px){.history-filters{grid-template-columns:1fr;}}
+
+.settings-form{padding:20px}.settings-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.settings-help{font-size:11px;color:#748297;margin:14px 0}.settings-actions{display:flex;justify-content:flex-end}.settings-actions .btn{min-width:190px}@media(max-width:760px){.settings-grid{grid-template-columns:1fr}.settings-form{padding:14px}}
