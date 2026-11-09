@@ -9,16 +9,16 @@ const vehicle=id=>DB.vehicles.find(v=>String(v.id)===String(id));
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 async function api(url,opts={}){const r=await fetch(API_BASE+'/api'+url,{headers:{'Content-Type':'application/json',...(opts.headers||{})},...opts});let data={};try{data=await r.json()}catch{}if(!r.ok)throw Error(data.error||'No se pudo completar la operación');return data}
 function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600)}
-function kmState(rem){return rem<=100?['Cambio urgente','bad']:rem<=500?['Pronto cambio','orange']:rem<=1500?['En vigilancia','yellow']:['No urgente','ok']}
+function kmState(rem){const c=DB.settings||{};const orange=Math.max(0,Number(c.orangeMinKm??100));const yellow=Math.max(orange,Number(c.yellowMinKm??500));const green=Math.max(yellow,Number(c.greenMinKm??1500));return rem<=orange?['Cambio urgente','bad']:rem<=yellow?['Pronto cambio','orange']:rem<=green?['En vigilancia','yellow']:['No urgente','ok']}
 function oilDaysLeft(v){if(!v.oilLastDate)return null;const d=new Date(v.oilLastDate+'T12:00:00');d.setMonth(d.getMonth()+Number(v.oilIntervalMonths||6));return Math.ceil((new Date(d.toDateString())-new Date(new Date().toDateString()))/86400000)}
-function oilStatus(v){const km=oilRemain(v);if(km<=100)return ['Cambio urgente','bad'];if(km<=500)return ['Pronto cambio','orange'];if(km<=1500)return ['En vigilancia','yellow'];return ['No urgente','ok']}
+function oilStatus(v){return kmState(oilRemain(v))}
 function docState(date){const days=Math.ceil((new Date(date+'T23:59:59')-new Date())/86400000);return days<0?['Vencido','bad']:days<=30?['Por vencer','warn']:['Vigente','ok']}
-function oilRemain(v){return (Number(v.oilLastKm||0)+Number(v.oilInterval||5000))-Number(v.currentKm||0)}
+function oilRemain(v){return (Number(v.oilLastKm||0)+Number(v.oilInterval||DB.settings?.oilIntervalKm||5000))-Number(v.currentKm||0)}
 function preventiveNextDate(v){if(!v.preventiveLastDate)return null;const d=new Date(v.preventiveLastDate+'T12:00:00');const n=Math.max(1,Number(v.preventiveIntervalValue||1));const u=v.preventiveIntervalUnit||'months';if(u==='days')d.setDate(d.getDate()+n);else if(u==='weeks')d.setDate(d.getDate()+7*n);else if(u==='years')d.setFullYear(d.getFullYear()+n);else d.setMonth(d.getMonth()+n);return d}
 function preventiveStatus(v){const d=preventiveNextDate(v);if(!d)return ['Sin programar','neutral'];const days=Math.ceil((d-new Date())/86400000);return days<0?['Vencido','bad']:days<=7?['Próximo','warn']:['Al día','ok']}
 function preventiveFrequency(v){return v.preventiveIntervalValue?`${v.preventiveIntervalValue} ${({days:'día(s)',weeks:'semana(s)',months:'mes(es)',years:'año(s)'})[v.preventiveIntervalUnit||'months']}`:'—'}
 function vehicleLabel(v){return `${v.name}${v.plate?' · '+v.plate:''}`}
-function showPage(name){$$('.page').forEach(p=>p.hidden=p.id!==`page-${name}`);$$('.nav').forEach(n=>n.classList.toggle('active',n.dataset.page===name));const titles={dashboard:'Panel general',vehicles:'Vehículos',oil:'Cambios de aceite',weekly:'Revisión semanal',maintenance:'Mantenimientos',documents:'Documentos y SOAT',observations:'Observaciones',history:'Historial técnico'};$('#pageTitle').textContent=titles[name]||name;render();window.scrollTo(0,0)}
+function showPage(name){$$('.page').forEach(p=>p.hidden=p.id!==`page-${name}`);$$('.nav').forEach(n=>n.classList.toggle('active',n.dataset.page===name));const titles={dashboard:'Panel general',vehicles:'Vehículos',oil:'Cambios de aceite',weekly:'Revisión semanal',maintenance:'Mantenimientos',documents:'Documentos y SOAT',observations:'Observaciones',history:'Historial técnico',settings:'Configuración'};$('#pageTitle').textContent=titles[name]||name;render();window.scrollTo(0,0)}
 function go(name){showPage(name)}
 $$('.nav').forEach(b=>b.addEventListener('click',()=>go(b.dataset.page)));
 $$('[data-go]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.go)));
@@ -41,12 +41,16 @@ function render(){
   ['Documentos por vencer',DB.documents.filter(d=>docState(d.expiryDate)[1]!=='ok').length,'SOAT y otros documentos','▤']
  ].map(x=>`<div class="stat"><div class="stat-top"><span>${x[0]}</span><span class="stat-icon">${x[3]}</span></div><strong>${fmt(x[1])}</strong><small>${x[2]}</small></div>`).join('');
  $('#alertsList').innerHTML=alerts.length?alerts.slice(0,7).map(a=>`<div class="alert-item"><div class="alert-symbol ${a.level==='bad'?'red':''}">${a.level==='bad'?'!':'◷'}</div><div><b>${esc(a.title)}</b><small>${esc(a.desc)}</small></div></div>`).join(''):'<div class="empty">No hay alertas pendientes. La flota está al día.</div>';
- const ok=active.filter(v=>oilRemain(v)>1500).length,soon=active.length-ok;
+ const ok=active.filter(v=>oilRemain(v)>Number(DB.settings?.greenMinKm??1500)).length,soon=active.length-ok;
  $('#fleetStatus').innerHTML=`<div class="fleet-row"><span>Dentro del rango de mantenimiento</span><b>${ok}</b></div><div class="bar"><span style="width:${active.length?ok/active.length*100:0}%"></span></div><div class="fleet-row"><span>Requieren seguimiento</span><b>${soon}</b></div><div class="bar"><span style="width:${active.length?soon/active.length*100:0}%;background:#dfa13e"></span></div><div class="fleet-row"><span>Documentos vigentes</span><b>${DB.documents.filter(d=>docState(d.expiryDate)[1]==='ok').length}</b></div>`;
  const oil=[...active].sort((a,b)=>oilRemain(a)-oilRemain(b));
  $('#dashboardOil').innerHTML=oil.slice(0,6).map(v=>{let r=oilRemain(v),s=oilStatus(v);return `<tr><td class="vehicle-name">${esc(v.name)}</td><td>${esc(v.plate||'—')}</td><td>${fmt(v.currentKm)}</td><td>${fmt(Number(v.oilLastKm||0)+Number(v.oilInterval||5000))}</td><td>${fmt(r)} km</td><td><span class="pill ${s[1]}">${s[0]}</span></td></tr>`}).join('')||emptyRow(6);
  $('#vehiclesTable').innerHTML=filteredVehicles().map(v=>`<tr><td class="vehicle-name">${esc(v.name)}</td><td>${esc(v.plate||'—')}</td><td>${fmt(v.currentKm)} km</td><td><span class="pill ${v.active?'ok':'neutral'}">${v.active?'Activo':'Inactivo'}</span></td><td><button class="action-btn" onclick="editVehicle('${v.id}')">Editar</button> <button class="action-btn" onclick="toggleVehicle('${v.id}')">${v.active?'Desactivar':'Activar'}</button> <button class="action-btn danger" onclick="deleteVehicle('${v.id}')">Eliminar</button></td></tr>`).join('')||emptyRow(5);
  $('#oilTable').innerHTML=oil.map(v=>{let r=oilRemain(v),s=oilStatus(v);return `<tr><td class="vehicle-name">${esc(v.name)}<span class="sub">${esc(v.plate||'Sin placa')}</span></td><td>${dateFmt(v.oilLastDate)}</td><td>${fmt(v.oilLastKm)}</td><td>${fmt(v.currentKm)}</td><td>${fmt(Number(v.oilLastKm||0)+Number(v.oilInterval||5000))}</td><td>${fmt(r)} km</td><td><span class="pill ${s[1]}">${s[0]}</span></td><td><button class="action-btn" onclick="registerOil('${v.id}')">Registrar cambio</button> <button class="action-btn" onclick="editVehicle('${v.id}')">Editar</button></td></tr>`}).join('')||emptyRow(8);
+ const cfgBody=$('#oilVehicleSettings'); if(cfgBody) cfgBody.innerHTML=DB.vehicles.map(v=>`<tr><td class="vehicle-name">${esc(vehicleLabel(v))}</td><td>${fmt(v.currentKm)} km</td><td>${fmt(v.oilLastKm)} km</td><td>${fmt(v.oilInterval||DB.settings?.oilIntervalKm||5000)} km</td><td>${fmt(Number(v.oilLastKm||0)+Number(v.oilInterval||DB.settings?.oilIntervalKm||5000))} km</td><td><button class="action-btn" onclick="configureOilVehicle('${v.id}')">Configurar</button></td></tr>`).join('')||emptyRow(6);
+ const sf=$('#oilSettingsForm'); if(sf&&!sf.dataset.loaded){const c=DB.settings||{};sf.elements.oilIntervalKm.value=c.oilIntervalKm??5000;sf.elements.greenMinKm.value=c.greenMinKm??1500;sf.elements.yellowMinKm.value=c.yellowMinKm??500;sf.elements.orangeMinKm.value=c.orangeMinKm??100;sf.dataset.loaded='1';}
+ const rule=$('#oilRulesNotice'); if(rule){const c=DB.settings||{};rule.textContent=`Semáforo configurable: verde más de ${fmt(c.greenMinKm??1500)} km · amarillo ${fmt(c.yellowMinKm??500)}–${fmt(c.greenMinKm??1500)} km · naranja ${fmt(c.orangeMinKm??100)}–${fmt(c.yellowMinKm??500)} km · rojo ${fmt(c.orangeMinKm??100)} km o menos. El intervalo actual es ${fmt(c.oilIntervalKm??5000)} km.`;}
+ const c=DB.settings||{};const lg=$('#legendGreen');if(lg)lg.textContent=`Más de ${fmt(c.greenMinKm??1500)} km`;const ly=$('#legendYellow');if(ly)ly.textContent=`${fmt(c.yellowMinKm??500)}–${fmt(c.greenMinKm??1500)} km`;const lo=$('#legendOrange');if(lo)lo.textContent=`${fmt(c.orangeMinKm??100)}–${fmt(c.yellowMinKm??500)} km`;const lr=$('#legendRed');if(lr)lr.textContent=`${fmt(c.orangeMinKm??100)} km o menos`;
  const ms=DB.maintenances.filter(m=>{if(String(m.type||'').trim().toLowerCase()==='cambio de aceite')return false;let v=vehicle(m.vehicleId);return (!$('#maintenanceSearch')?.value||`${v?.name} ${v?.plate} ${m.type} ${m.description}`.toLowerCase().includes($('#maintenanceSearch').value.toLowerCase()))&&($('#maintenanceType')?.value==='all'||m.type===$('#maintenanceType')?.value)});
  $('#maintenanceTable').innerHTML=ms.map(m=>`<tr><td>${dateFmt(m.date)}</td><td class="vehicle-name">${esc(vehicleLabel(vehicle(m.vehicleId)||{name:'Eliminado'}))}</td><td>${esc(m.type)}<span class="sub">${esc(m.description)}</span></td><td>${fmt(m.km)} km</td><td>${esc(m.provider||'—')}</td><td>${money(m.cost)}</td><td><button class="action-btn" onclick="editMaintenance('${m.id}')">Editar</button> <button class="action-btn danger" onclick="deleteItem('maintenances','${m.id}')">Eliminar</button></td></tr>`).join('')||emptyRow(7);
  $('#documentsTable').innerHTML=DB.documents.map(d=>{let s=docState(d.expiryDate);return `<tr><td class="vehicle-name">${esc(vehicleLabel(vehicle(d.vehicleId)||{name:'Eliminado'}))}</td><td>${esc(d.type)}</td><td>${esc(d.number||'—')}</td><td>${dateFmt(d.issueDate)}</td><td>${dateFmt(d.expiryDate)}</td><td><span class="pill ${s[1]}">${s[0]}</span></td><td><button class="action-btn" onclick="editDocument('${d.id}')">Editar</button> <button class="action-btn danger" onclick="deleteItem('documents','${d.id}')">Eliminar</button></td></tr>`}).join('')||emptyRow(7);
@@ -81,11 +85,15 @@ $$('[data-close]').forEach(x=>x.addEventListener('click',closeModal));
 $('#addVehicle').onclick=()=>openModal('Registrar vehículo',[
  {name:'name',label:'Nombre del vehículo',required:true},{name:'plate',label:'Placa'},
  {name:'currentKm',label:'Kilometraje actual',type:'number',min:0,required:true},
+ {name:'oilLastKm',label:'Último cambio de aceite (km)',type:'number',min:0,value:0},
+ {name:'oilInterval',label:'Intervalo de aceite (km)',type:'number',min:1,value:DB.settings?.oilIntervalKm||5000},
  {name:'notes',label:'Notas generales',type:'textarea',full:true}
 ],d=>api('/vehicles',{method:'POST',body:JSON.stringify(d)}));
 window.editVehicle=id=>{let v=vehicle(id);openModal('Actualizar datos del vehículo',[
  {name:'name',label:'Nombre',value:v.name,required:true},{name:'plate',label:'Placa',value:v.plate},
  {name:'currentKm',label:'Kilometraje actual',type:'number',value:v.currentKm,min:0},
+ {name:'oilLastKm',label:'Último cambio de aceite (km)',type:'number',value:v.oilLastKm,min:0},
+ {name:'oilInterval',label:'Intervalo de aceite (km)',type:'number',value:v.oilInterval||DB.settings?.oilIntervalKm||5000,min:1},
  {name:'notes',label:'Notas generales',type:'textarea',value:v.notes,full:true}
 ],d=>api('/vehicles/'+id,{method:'PUT',body:JSON.stringify({...d,active:v.active})}))};
 window.configurePreventive=id=>{const v=vehicle(id);openModal('Programar chequeo preventivo · '+v.name,[
@@ -131,6 +139,12 @@ $('#addObservation').onclick=()=>openModal('Nueva observación',[
  {name:'priority',label:'Prioridad',type:'select',options:['Baja','Media','Alta'].map(x=>({value:x,label:x}))},
  {name:'text',label:'Observación / incidencia',type:'textarea',full:true,required:true}
 ],d=>api('/observations',{method:'POST',body:JSON.stringify(d)}));
+window.configureOilVehicle=id=>{const v=vehicle(id);if(!v)return;openModal('Configurar control de aceite · '+v.name,[
+ {name:'currentKm',label:'Kilometraje actual del odómetro',type:'number',min:0,value:v.currentKm,required:true},
+ {name:'oilLastKm',label:'Kilometraje del último cambio realizado',type:'number',min:0,value:v.oilLastKm||0,required:true},
+ {name:'oilInterval',label:'Intervalo entre cambios (km)',type:'number',min:1,value:v.oilInterval||DB.settings?.oilIntervalKm||5000,required:true}
+ ],d=>api('/vehicles/'+id,{method:'PUT',body:JSON.stringify({...v,...d})}))};
+$('#oilSettingsForm')?.addEventListener('submit',async e=>{e.preventDefault();const f=e.currentTarget;const d=Object.fromEntries(new FormData(f).entries());const settings={oilIntervalKm:Number(d.oilIntervalKm),greenMinKm:Number(d.greenMinKm),yellowMinKm:Number(d.yellowMinKm),orangeMinKm:Number(d.orangeMinKm)};if(!(settings.greenMinKm>settings.yellowMinKm&&settings.yellowMinKm>settings.orangeMinKm&&settings.orangeMinKm>=0)){toast('Los rangos deben cumplir: verde > amarillo > naranja ≥ 0');return}try{await api('/settings',{method:'PUT',body:JSON.stringify(settings)});f.dataset.loaded='';await refresh();toast('Configuración de aceite guardada')}catch(err){toast(err.message)}});
 $('#addWeekly').onclick=()=>openModal('Registrar revisión semanal',[
  {name:'vehicleId',label:'Vehículo',type:'select',options:vehicleOptions(),required:true},
  {name:'date',label:'Fecha de revisión',type:'date',value:today(),required:true},
