@@ -51,9 +51,9 @@ const seedVehicles = [
   oilIntervalMonths: 6,
   oilLastKm: v[2],
   oilNextKm: v[5],
-  preventiveKm: 0,
-  preventiveLastKm: null,
-  preventiveInterval: 5000,
+  preventiveLastDate: null,
+  preventiveIntervalValue: 1,
+  preventiveIntervalUnit: 'months',
   active: true,
   notes: ''
 }));
@@ -63,12 +63,12 @@ let local = null;
 
 function initialData() {
   const vehicles = [
-    { id: 'v-demo-1', name: 'Crafter Blanca', plate: 'BJQ-848', currentKm: 11500, oilLastKm: 10000, oilLastDate: '2026-10-20', oilInterval: 5000, oilIntervalMonths: 6, oilNextKm: 15000, preventiveLastKm: 10000, preventiveInterval: 5000, active: true, notes: 'Unidad de traslado principal.' },
-    { id: 'v-demo-2', name: 'Crafter Negra', plate: 'BBK-904', currentKm: 13800, oilLastKm: 10000, oilLastDate: '2026-10-12', oilInterval: 5000, oilIntervalMonths: 6, oilNextKm: 15000, preventiveLastKm: 10000, preventiveInterval: 5000, active: true, notes: 'Ejemplo en vigilancia.' },
-    { id: 'v-demo-3', name: 'Carroza Blanca', plate: 'AZU-071', currentKm: 14700, oilLastKm: 10000, oilLastDate: '2026-09-30', oilInterval: 5000, oilIntervalMonths: 6, oilNextKm: 15000, preventiveLastKm: 10000, preventiveInterval: 5000, active: true, notes: 'Ejemplo próximo a cambio.' },
-    { id: 'v-demo-4', name: 'Carroza Negra', plate: 'BQA-554', currentKm: 15100, oilLastKm: 10000, oilLastDate: '2026-09-15', oilInterval: 5000, oilIntervalMonths: 6, oilNextKm: 15000, preventiveLastKm: 10000, preventiveInterval: 5000, active: true, notes: 'Ejemplo con cambio vencido.' },
-    { id: 'v-demo-5', name: 'Yaris Blanco', plate: 'BZI-116', currentKm: 82935, oilLastKm: 81700, oilLastDate: '2026-10-02', oilInterval: 5000, oilIntervalMonths: 6, oilNextKm: 86700, preventiveLastKm: 77935, preventiveInterval: 5000, active: true, notes: 'Vehículo administrativo.' },
-    { id: 'v-demo-6', name: 'Avanza', plate: 'BZN-303', currentKm: 202060, oilLastKm: 197549, oilLastDate: '2026-08-20', oilInterval: 5000, oilIntervalMonths: 6, oilNextKm: 202549, preventiveLastKm: 199060, preventiveInterval: 5000, active: true, notes: '' }
+    { id: 'v-demo-1', name: 'Crafter Blanca', plate: 'BJQ-848', currentKm: 11500, oilLastKm: 10000, oilLastDate: '2026-10-20', oilInterval: 5000, oilIntervalMonths: 6, oilNextKm: 15000, active: true, notes: 'Unidad de traslado principal.' },
+    { id: 'v-demo-2', name: 'Crafter Negra', plate: 'BBK-904', currentKm: 13800, oilLastKm: 10000, oilLastDate: '2026-10-12', oilInterval: 5000, oilIntervalMonths: 6, oilNextKm: 15000, active: true, notes: 'Ejemplo en vigilancia.' },
+    { id: 'v-demo-3', name: 'Carroza Blanca', plate: 'AZU-071', currentKm: 14700, oilLastKm: 10000, oilLastDate: '2026-09-30', oilInterval: 5000, oilIntervalMonths: 6, oilNextKm: 15000, active: true, notes: 'Ejemplo próximo a cambio.' },
+    { id: 'v-demo-4', name: 'Carroza Negra', plate: 'BQA-554', currentKm: 15100, oilLastKm: 10000, oilLastDate: '2026-09-15', oilInterval: 5000, oilIntervalMonths: 6, oilNextKm: 15000, active: true, notes: 'Ejemplo con cambio vencido.' },
+    { id: 'v-demo-5', name: 'Yaris Blanco', plate: 'BZI-116', currentKm: 82935, oilLastKm: 81700, oilLastDate: '2026-10-02', oilInterval: 5000, oilIntervalMonths: 6, oilNextKm: 86700, active: true, notes: 'Vehículo administrativo.' },
+    { id: 'v-demo-6', name: 'Avanza', plate: 'BZN-303', currentKm: 202060, oilLastKm: 197549, oilLastDate: '2026-08-20', oilInterval: 5000, oilIntervalMonths: 6, oilNextKm: 202549, active: true, notes: '' }
   ];
 
   return {
@@ -430,6 +430,20 @@ function daysUntil(dateValue) {
   return Math.ceil((expiry.getTime() - today.getTime()) / 86400000);
 }
 
+
+function preventiveNextDate(v) {
+  if (!v.preventiveLastDate) return null;
+  const d = new Date(v.preventiveLastDate + 'T12:00:00');
+  if (Number.isNaN(d.getTime())) return null;
+  const n = Math.max(1, num(v.preventiveIntervalValue) || 1);
+  const u = v.preventiveIntervalUnit || 'months';
+  if (u === 'days') d.setDate(d.getDate() + n);
+  else if (u === 'weeks') d.setDate(d.getDate() + n * 7);
+  else if (u === 'years') d.setFullYear(d.getFullYear() + n);
+  else d.setMonth(d.getMonth() + n);
+  return d;
+}
+
 async function checkAutomaticAlerts() {
   if (!pool || !pushConfigured()) return;
 
@@ -456,22 +470,20 @@ async function checkAutomaticAlerts() {
         );
       }
 
-      const preventiveNextKm = num(vehicle.preventiveKm) ||
-        (vehicle.preventiveLastKm != null
-          ? num(vehicle.preventiveLastKm) + (num(vehicle.preventiveInterval) || 5000)
-          : 0);
-
-      const preventiveRemaining = preventiveNextKm - currentKm;
-
-      if (preventiveNextKm > 0 && preventiveRemaining <= kmWarning) {
-        const state = preventiveRemaining <= 0 ? 'VENCIDO' : 'PRÓXIMO';
-        const key = `preventive:${vehicle.id}:${preventiveNextKm}:${state}`;
-        await sendUniqueAlert(
-          key,
-          state === 'VENCIDO' ? 'Mantenimiento preventivo vencido' : 'Mantenimiento preventivo próximo',
-          `${vehicle.name} (${vehicle.plate || 'Sin placa'}): ${preventiveRemaining <= 0 ? 'superó' : 'le quedan'} ${Math.abs(preventiveRemaining)} km para el mantenimiento preventivo.`,
-          '/'
-        );
+      // Chequeo preventivo: se programa por TIEMPO (fecha de última revisión + frecuencia).
+      const prevNext = preventiveNextDate(vehicle);
+      if (prevNext) {
+        const prevDays = Math.ceil((prevNext.getTime() - Date.now()) / 86400000);
+        if (prevDays <= 7) {
+          const state = prevDays < 0 ? 'VENCIDO' : 'PRÓXIMO';
+          const key = `preventive:${vehicle.id}:${prevNext.toISOString().slice(0, 10)}:${state}`;
+          await sendUniqueAlert(
+            key,
+            state === 'VENCIDO' ? 'Chequeo preventivo vencido' : 'Chequeo preventivo próximo',
+            `${vehicle.name} (${vehicle.plate || 'Sin placa'}): ${prevDays < 0 ? 'venció hace ' + Math.abs(prevDays) + ' día(s)' : 'corresponde en ' + prevDays + ' día(s)'}.`,
+            '/'
+          );
+        }
       }
     }
 
@@ -497,7 +509,7 @@ async function checkAutomaticAlerts() {
 }
 
 app.get('/api/health', (req, res) => {
-  res.json({ ok: true, service: 'Martinez Gestion Vehicular', version: '1.3.2' });
+  res.json({ ok: true, service: 'Martinez Gestion Vehicular', version: '1.3.4' });
 });
 
 app.get('/api/push/public-key', (req, res) => {
@@ -622,9 +634,6 @@ app.post('/api/vehicles', async (req, res) => {
       oilInterval: interval,
       oilIntervalMonths: num(b.oilIntervalMonths) || 6,
       oilNextKm: lastKm + interval,
-      preventiveKm: num(b.preventiveKm),
-      preventiveLastKm: b.preventiveLastKm === '' || b.preventiveLastKm == null ? null : num(b.preventiveLastKm),
-      preventiveInterval: num(b.preventiveInterval) || 5000,
       active: b.active !== false,
       notes: clean(b.notes)
     };
@@ -632,6 +641,7 @@ app.post('/api/vehicles', async (req, res) => {
     d.vehicles.push(v);
     ensureOilCycles(d);
     logActivity(d, 'CREACIÓN', v.id, `Vehículo registrado con ${v.currentKm} km.`, 'Vehículo');
+    if (b.oilLastDate && lastKm > 0) applyOilConfig(d, v, { oilLastKm: lastKm, oilInterval: interval, oilLastDate: b.oilLastDate });
     await writeData(d);
     res.status(201).json(v);
   } catch (e) {
@@ -789,10 +799,8 @@ app.post('/api/maintenances', async (req, res) => {
         }
       }
 
-      if (m.type.toLowerCase().includes('preventivo')) {
-        v.preventiveLastKm = m.km;
-        v.preventiveInterval = num(v.preventiveInterval) || 5000;
-        v.preventiveKm = m.km + v.preventiveInterval;
+      if (m.type.toLowerCase().includes('preventivo') && m.status === 'Realizado' && m.date && (!v.preventiveLastDate || m.date > v.preventiveLastDate)) {
+        v.preventiveLastDate = m.date;
       }
     }
 
@@ -845,9 +853,7 @@ app.put('/api/maintenances/:id', async (req, res) => {
     if (m.type.toLowerCase().includes('preventivo')) {
       const v = d.vehicles.find(x => String(x.id) === String(m.vehicleId));
       if (v) {
-        v.preventiveLastKm = m.km;
-        v.preventiveInterval = num(v.preventiveInterval) || 5000;
-        v.preventiveKm = m.km + v.preventiveInterval;
+        if (m.status === 'Realizado' && m.date && (!v.preventiveLastDate || m.date > v.preventiveLastDate)) v.preventiveLastDate = m.date;
         v.currentKm = Math.max(num(v.currentKm), m.km);
       }
     }
