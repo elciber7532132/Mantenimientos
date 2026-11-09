@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#101c2d"><title>MARTÍNEZ | Gestión Vehicular</title>
-<link rel="stylesheet" href="/styles.css">
+<link rel="stylesheet" href="/styles.css?v=1.3.1">
 </head>
 <body>
 <aside class="sidebar">
@@ -44,7 +44,7 @@
   <section id="page-documents" class="page" hidden><div class="toolbar"><div><h2>Documentos y vencimientos</h2><p>SOAT, revisión técnica, seguros y otros documentos de la flota.</p></div><button class="btn btn-primary" id="addDocument">＋ Registrar documento</button></div><div class="notice">El sistema alerta automáticamente 30 días antes del vencimiento. Los documentos vencidos se muestran como críticos.</div><div class="panel"><div class="table-wrap"><table><thead><tr><th>VEHÍCULO</th><th>DOCUMENTO</th><th>N.º / REFERENCIA</th><th>EMISIÓN</th><th>VENCIMIENTO</th><th>ESTADO</th><th></th></tr></thead><tbody id="documentsTable"></tbody></table></div></div></section>
   <section id="page-observations" class="page" hidden><div class="toolbar"><div><h2>Observaciones por vehículo</h2><p>Incidencias, recomendaciones y tareas pendientes.</p></div><button class="btn btn-primary" id="addObservation">＋ Nueva observación</button></div><div id="observationsList" class="observation-grid"></div></section>
   <section id="page-settings" class="page" hidden>
-    <div class="toolbar"><div><h2>Configuración del control de aceite</h2><p>Define el intervalo de mantenimiento y los límites del semáforo.</p></div></div>
+    <div class="toolbar"><div><h2>Configuración del control de aceite</h2><p>Define el intervalo de mantenimiento y los límites del semáforo.</p><p id="versionInfo" class="sub">Versión pantalla: 1.3.1 · Servidor: comprobando…</p></div></div>
     <div class="notice">Los cambios se guardan en el servidor y se aplican a todos los módulos. Puedes usar un intervalo general y ajustar uno diferente por vehículo.</div>
     <div class="panel"><div class="panel-head"><div><h3>Reglas generales</h3><p>Valores predeterminados para nuevos vehículos y rangos de alerta.</p></div></div>
       <form id="oilSettingsForm" class="settings-form">
@@ -68,5 +68,5 @@
 </main>
 <div id="modal" class="modal" hidden><div class="modal-backdrop" data-close></div><div class="modal-card"><div class="modal-head"><div><div class="eyebrow">GESTIÓN DE FLOTA</div><h2 id="modalTitle">Nuevo registro</h2></div><button class="close" data-close>×</button></div><form id="modalForm"><div id="modalFields" class="form-grid"></div><div class="modal-actions"><button type="button" class="btn btn-light" data-close>Cancelar</button><button class="btn btn-primary" type="submit">Guardar registro</button></div></form></div></div>
 <div id="toast" class="toast"></div>
-<script src="/config.js"></script><script src="/app.js"></script>
+<script src="/config.js"></script><script src="/app.js?v=1.3.1"></script>
 </body></html>
