@@ -203,18 +203,24 @@ function syncOilForVehicle(data, vehicleId) {
   if (!v) return;
 
   const history = (data.maintenances || [])
-    .filter(m => String(m.vehicleId) === String(vehicleId) && String(m.type || '').toLowerCase().includes('aceite'))
+    .filter(m => String(m.vehicleId) === String(vehicleId) && String(m.type || '').toLowerCase().includes('aceite') && (m.status || 'Realizado') !== 'Anulado')
     .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')) || num(b.km) - num(a.km));
 
   const latest = history[0];
 
-  if (latest) {
+  // El kilometraje base del control pertenece al ciclo activo, no al último
+  // servicio registrado (un cambio anticipado no reinicia el intervalo).
+  const activeCycle = (data.oilCycles || []).find(c => String(c.vehicleId) === String(vehicleId) && c.status === 'En curso');
+  v.oilInterval = num(activeCycle?.intervalKm) || num(v.oilInterval) || 5000;
+  if (activeCycle) {
+    v.oilLastKm = num(activeCycle.startKm);
+    v.oilLastDate = activeCycle.startDate || v.oilLastDate;
+    v.oilNextKm = num(activeCycle.plannedKm);
+  } else if (latest) {
     v.oilLastKm = num(latest.km);
     v.oilLastDate = latest.date || v.oilLastDate;
-    v.oilInterval = num(v.oilInterval) || 5000;
     v.oilNextKm = v.oilLastKm + v.oilInterval;
   } else {
-    v.oilInterval = num(v.oilInterval) || 5000;
     v.oilLastKm = num(v.oilLastKm);
     v.oilNextKm = v.oilLastKm + v.oilInterval;
   }
@@ -231,14 +237,33 @@ function ensureOilCycles(data) {
       const oilHistory = (data.maintenances || [])
         .filter(m => String(m.vehicleId) === String(v.id) && String(m.type || '').toLowerCase().includes('aceite') && (m.status || 'Realizado') !== 'Anulado')
         .sort((a, b) => String(a.date || '').localeCompare(String(b.date || '')) || num(a.km) - num(b.km));
-      let previousKm = null, previousDate = null;
+      let cycle = null;
       for (const m of oilHistory) {
-        const startKm = previousKm === null ? Math.max(0, num(m.km) - interval) : previousKm;
-        const cycle = { id: uid(), vehicleId: v.id, number: data.oilCycles.filter(c => String(c.vehicleId) === String(v.id)).length + 1,
-          startDate: previousDate || null, startKm, plannedKm: startKm + interval, endDate: m.date, endKm: num(m.km),
-          intervalKm: interval, distanceKm: Math.max(0, num(m.km) - startKm), status: 'Cerrado', maintenanceId: m.id,
-          provider: m.provider || '', cost: num(m.cost), parts: m.parts || '', notes: m.description || '', createdAt: new Date().toISOString() };
-        data.oilCycles.push(cycle); m.oilCycleId = cycle.id; previousKm = num(m.km); previousDate = m.date;
+        if (!cycle) {
+          const startKm = Math.max(0, num(m.km) - interval);
+          cycle = { id: uid(), vehicleId: v.id, number: 1, startDate: null, startKm,
+            plannedKm: startKm + interval, endDate: null, endKm: null, intervalKm: interval,
+            distanceKm: null, status: 'En curso', maintenanceId: null, provider: '', cost: 0,
+            parts: '', notes: '', createdAt: new Date().toISOString() };
+          data.oilCycles.push(cycle);
+        }
+        m.oilCycleId = cycle.id;
+        m.nextKm = num(cycle.plannedKm);
+        if (num(m.km) >= num(cycle.plannedKm)) {
+          cycle.status = 'Cerrado'; cycle.endDate = m.date; cycle.endKm = num(m.km);
+          cycle.distanceKm = num(m.km) - num(cycle.startKm); cycle.maintenanceId = m.id;
+          cycle.provider = m.provider || ''; cycle.cost = num(m.totalCost ?? m.cost);
+          cycle.parts = m.parts || ''; cycle.notes = m.description || '';
+          cycle.closeReason = num(m.km) > num(cycle.plannedKm) ? 'Servicio realizado después del límite' : 'Límite alcanzado';
+          const nextStart = num(m.km);
+          cycle = { id: uid(), vehicleId: v.id, number: num(cycle.number) + 1, startDate: m.date,
+            startKm: nextStart, plannedKm: nextStart + interval, endDate: null, endKm: null,
+            intervalKm: interval, distanceKm: null, status: 'En curso', maintenanceId: null,
+            provider: '', cost: 0, parts: '', notes: '', createdAt: new Date().toISOString() };
+          data.oilCycles.push(cycle);
+        } else {
+          m.oilCycleAction = 'Servicio anticipado · ciclo continúa';
+        }
       }
     }
     const open = data.oilCycles.find(c => String(c.vehicleId) === String(v.id) && c.status === 'En curso');
@@ -611,31 +636,41 @@ app.post('/api/maintenances', async (req, res) => {
     };
 
     const v = d.vehicles.find(x => String(x.id) === String(m.vehicleId));
-    const isOilService = m.type.toLowerCase().includes('aceite');
+    const isOilService = m.type.toLowerCase().includes('aceite') && m.status === 'Realizado';
     if (isOilService && v) {
       ensureOilCycles(d);
       const openCycle = d.oilCycles.find(c => String(c.vehicleId) === String(v.id) && c.status === 'En curso');
       const intervalKm = num(v.oilInterval) || num(d.settings?.oilIntervalKm) || 5000;
       if (openCycle) {
-        if (m.km < num(openCycle.startKm)) return res.status(400).json({ error: 'El kilometraje del cambio no puede ser menor al inicio del ciclo.' });
-        openCycle.status = 'Cerrado';
-        openCycle.endDate = m.date;
-        openCycle.endKm = m.km;
-        openCycle.distanceKm = m.km - num(openCycle.startKm);
-        openCycle.maintenanceId = m.id;
-        openCycle.provider = m.provider;
-        openCycle.cost = m.totalCost;
-        openCycle.parts = m.parts;
-        openCycle.notes = m.description;
-        openCycle.closedAt = new Date().toISOString();
+        if (m.km < num(openCycle.startKm)) return res.status(400).json({ error: 'El kilometraje del cambio no puede ser menor al inicio del ciclo activo.' });
         m.oilCycleId = openCycle.id;
+        m.nextKm = num(openCycle.plannedKm);
+        // Un servicio anticipado queda en el historial, pero NO reinicia el ciclo.
+        if (m.km < num(openCycle.plannedKm)) {
+          m.oilCycleAction = 'Servicio anticipado · ciclo continúa';
+        } else {
+          // El ciclo solo se cierra cuando el servicio alcanza o supera el límite.
+          openCycle.status = 'Cerrado';
+          openCycle.endDate = m.date;
+          openCycle.endKm = m.km;
+          openCycle.distanceKm = m.km - num(openCycle.startKm);
+          openCycle.maintenanceId = m.id;
+          openCycle.provider = m.provider;
+          openCycle.cost = m.totalCost;
+          openCycle.parts = m.parts;
+          openCycle.notes = m.description;
+          openCycle.closedAt = new Date().toISOString();
+          openCycle.closeReason = m.km > num(openCycle.plannedKm) ? 'Servicio realizado después del límite' : 'Límite alcanzado';
+
+          const nextCycle = { id: uid(), vehicleId: v.id, number: num(openCycle.number) + 1,
+            startDate: m.date, startKm: m.km, plannedKm: m.km + intervalKm, endDate: null, endKm: null,
+            intervalKm, distanceKm: null, status: 'En curso', maintenanceId: null, provider: '', cost: 0,
+            parts: '', notes: '', createdAt: new Date().toISOString() };
+          d.oilCycles.push(nextCycle);
+          m.oilCycleAction = 'Ciclo anterior cerrado · nuevo ciclo iniciado';
+          m.nextKm = nextCycle.plannedKm;
+        }
       }
-      const nextCycle = { id: uid(), vehicleId: v.id, number: (openCycle?.number || 0) + 1,
-        startDate: m.date, startKm: m.km, plannedKm: m.km + intervalKm, endDate: null, endKm: null,
-        intervalKm, distanceKm: null, status: 'En curso', maintenanceId: null, provider: '', cost: 0,
-        parts: '', notes: '', createdAt: new Date().toISOString() };
-      d.oilCycles.push(nextCycle);
-      m.nextKm = nextCycle.plannedKm;
     }
 
     d.maintenances.unshift(m);
@@ -645,10 +680,15 @@ app.post('/api/maintenances', async (req, res) => {
       v.currentKm = Math.max(num(v.currentKm), m.km);
 
       if (isOilService) {
-        v.oilLastKm = m.km;
-        v.oilLastDate = m.date;
-        v.oilInterval = num(v.oilInterval) || 5000;
-        v.oilNextKm = m.km + v.oilInterval;
+        // Mantener como referencia el inicio del ciclo activo. El registro del
+        // servicio siempre se conserva en maintenances, aunque sea anticipado.
+        const activeCycle = d.oilCycles.find(c => String(c.vehicleId) === String(v.id) && c.status === 'En curso');
+        v.oilInterval = num(activeCycle?.intervalKm) || num(v.oilInterval) || 5000;
+        if (activeCycle) {
+          v.oilLastKm = num(activeCycle.startKm);
+          v.oilLastDate = activeCycle.startDate || v.oilLastDate;
+          v.oilNextKm = num(activeCycle.plannedKm);
+        }
       }
 
       if (m.type.toLowerCase().includes('preventivo')) {
@@ -1024,10 +1064,10 @@ app.get('/api/export/excel', async (req, res) => {
         'CICLO': cycle ? cycle.number : '', 'KILOMETRAJE': num(m.km), 'TALLER': m.provider || '',
         'COSTO (S/)': num(m.totalCost ?? m.cost), 'ACEITE / FILTROS': m.parts || '',
         'OBSERVACIONES': m.description || '', 'ESTADO': m.status || 'Realizado',
-        'PRÓXIMO CAMBIO (KM)': num(m.nextKm) };
+        'PRÓXIMO CAMBIO (KM)': num(m.nextKm), 'TRATAMIENTO DEL CICLO': m.oilCycleAction || 'Registro histórico' };
     });
     const os = XLSX.utils.json_to_sheet(oilServices);
-    os['!cols'] = [{wch:14},{wch:22},{wch:14},{wch:10},{wch:16},{wch:22},{wch:14},{wch:28},{wch:35},{wch:14},{wch:20}];
+    os['!cols'] = [{wch:14},{wch:22},{wch:14},{wch:10},{wch:16},{wch:22},{wch:14},{wch:28},{wch:35},{wch:14},{wch:20},{wch:38}];
     XLSX.utils.book_append_sheet(wb, os, 'Todos los cambios');
 
     const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
