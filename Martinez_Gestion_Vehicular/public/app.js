@@ -294,3 +294,16 @@ document.addEventListener('DOMContentLoaded', () => {
     button.addEventListener('click', activarNotificaciones);
   }
 });
+
+// Muestra las versiones de pantalla y servidor para comprobar que el despliegue quedó actualizado.
+document.addEventListener('DOMContentLoaded', async () => {
+  const el = document.getElementById('versionInfo');
+  if (!el) return;
+  try {
+    const r = await fetch((window.API_BASE_URL || '').replace(/\/$/, '') + '/api/health');
+    const j = await r.json();
+    el.textContent = `Versión pantalla: 1.3.1 · Servidor: ${j.version || 'ANTERIOR (sin actualizar)'}`;
+  } catch {
+    el.textContent = 'Versión pantalla: 1.3.1 · Servidor: no responde';
+  }
+});
