@@ -14,3 +14,30 @@
 @media(max-width:560px){.history-filters{grid-template-columns:1fr;}}
 
 .settings-form{padding:20px}.settings-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.settings-help{font-size:11px;color:#748297;margin:14px 0}.settings-actions{display:flex;justify-content:flex-end}.settings-actions .btn{min-width:190px}@media(max-width:760px){.settings-grid{grid-template-columns:1fr}.settings-form{padding:14px}}
+
+/* Tarjetas futuristas de vehículos */
+.vehicle-card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(245px,1fr));gap:16px;margin:8px 0 20px}
+.vehicle-card{position:relative;overflow:hidden;background:linear-gradient(145deg,#14283d 0%,#1b3a50 58%,#17535a 100%);border:1px solid #31566a;border-radius:15px;box-shadow:0 12px 28px #10263b18;transition:transform .2s,box-shadow .2s;color:#f5fbff}
+.vehicle-card:before{content:"";position:absolute;width:170px;height:170px;border:1px solid #8ce4dc22;border-radius:50%;right:-75px;top:-90px;box-shadow:0 0 0 18px #8ce4dc0b,0 0 0 38px #8ce4dc08;pointer-events:none}
+.vehicle-card:hover{transform:translateY(-4px);box-shadow:0 18px 34px #10263b30}
+.vehicle-card-main{position:relative;display:block;width:100%;min-height:215px;padding:20px 20px 14px;text-align:left;color:inherit;background:transparent;border:0;cursor:pointer}
+.vehicle-card-icon{display:grid;place-items:center;width:38px;height:38px;border:1px solid #80d8d044;border-radius:11px;background:#8ce4dc12;color:#9ce8df;font-size:19px}
+.vehicle-card-state{position:absolute;right:17px;top:22px}
+.vehicle-card h3{font-size:18px;letter-spacing:-.3px;margin:17px 0 4px;color:#fff}
+.vehicle-plate{font-size:10px;letter-spacing:1.5px;color:#9fb9c8;margin:0 0 18px;font-weight:800}
+.vehicle-card-km{border-top:1px solid #ffffff19;padding-top:12px;display:flex;align-items:flex-end;justify-content:space-between}
+.vehicle-card-km>small{font-size:9px;letter-spacing:1px;color:#9fb9c8;font-weight:800}
+.vehicle-card-km strong{font-size:20px;color:#fff}.vehicle-card-km strong small{font-size:10px;color:#a9c3cf}
+.vehicle-card-footer{display:flex;align-items:center;gap:8px;margin-top:13px;padding-top:11px;border-top:1px solid #ffffff19;font-size:9px;letter-spacing:.7px;color:#9fb9c8}
+.vehicle-card-footer b{font-size:10px;letter-spacing:0}.vehicle-card-footer b.ok{color:#67e0ae}.vehicle-card-footer b.yellow{color:#f6dc72}.vehicle-card-footer b.orange{color:#ffb477}.vehicle-card-footer b.bad{color:#ff8585}.card-arrow{margin-left:auto;color:#b6d8dc;font-weight:800}
+.vehicle-card-actions{position:relative;display:flex;gap:7px;padding:10px 16px;background:#0e2032a8;border-top:1px solid #ffffff15}.vehicle-card-actions .action-btn{font-size:10px;padding:6px 8px;background:#ffffff12;border-color:#ffffff20;color:#d9e9ef}.vehicle-card-actions .action-btn.danger{color:#ffaaaa}
+.vehicle-card.is-inactive{filter:saturate(.45);opacity:.8}
+.vehicle-detail{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);margin:18px 0 24px;overflow:hidden;scroll-margin-top:15px}
+.vehicle-detail[hidden]{display:none}
+.vehicle-detail-head{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:22px 24px;background:linear-gradient(110deg,#14283d,#205b65);color:white}
+.vehicle-detail-head .eyebrow{color:#9dcac9}.vehicle-detail-head h2{font-size:21px;margin:6px 0}.vehicle-detail-head p{margin:0;color:#c2d5dc;font-size:11px}.vehicle-detail-actions{display:flex;gap:8px;flex-wrap:wrap}.vehicle-detail-actions .btn{font-size:10px}
+.vehicle-detail-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-bottom:1px solid var(--line)}
+.vehicle-detail-stats>div{padding:17px 20px;border-right:1px solid var(--line)}.vehicle-detail-stats>div:last-child{border:0}.vehicle-detail-stats small{display:block;color:#8a98a9;font-size:9px;letter-spacing:.7px;font-weight:800;margin-bottom:7px}.vehicle-detail-stats b{font-size:15px;color:#263b53}.vehicle-detail-stats b.ok{color:#168256}.vehicle-detail-stats b.yellow{color:#a18400}.vehicle-detail-stats b.orange{color:#b85a13}.vehicle-detail-stats b.bad{color:#c23e3e}
+.vehicle-detail-history .panel-head{padding:17px 21px}.oil-timeline{padding:10px 24px 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px}.oil-timeline-item{display:flex;gap:10px;padding:13px;border:1px solid #e8edf2;border-radius:10px;background:#fbfcfe}.timeline-dot{width:9px;height:9px;flex:0 0 9px;margin-top:4px;border-radius:50%;background:#28a99a;box-shadow:0 0 0 4px #28a99a18}.oil-timeline-item b{font-size:11px;color:#293e55}.oil-timeline-item p{font-size:13px;font-weight:800;margin:5px 0;color:#1d5360}.oil-timeline-item small{font-size:9px;color:#8491a2}
+@media(max-width:760px){.vehicle-detail-head{align-items:flex-start;flex-direction:column}.vehicle-detail-stats{grid-template-columns:repeat(2,1fr)}.vehicle-detail-stats>div:nth-child(2){border-right:0}.vehicle-detail-stats>div:nth-child(-n+2){border-bottom:1px solid var(--line)}.vehicle-card-grid{grid-template-columns:1fr 1fr;gap:10px}.vehicle-card-main{padding:15px;min-height:205px}.vehicle-card h3{font-size:15px}.vehicle-card-km strong{font-size:17px}.vehicle-card-actions{padding:8px;gap:4px}.vehicle-card-actions .action-btn{padding:5px 6px;font-size:9px}}
+@media(max-width:480px){.vehicle-card-grid{grid-template-columns:1fr}.vehicle-card-main{min-height:190px}.vehicle-detail-actions{width:100%}.vehicle-detail-actions .btn{flex:1}}
