@@ -41,3 +41,17 @@
 .vehicle-detail-history .panel-head{padding:17px 21px}.oil-timeline{padding:10px 24px 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px}.oil-timeline-item{display:flex;gap:10px;padding:13px;border:1px solid #e8edf2;border-radius:10px;background:#fbfcfe}.timeline-dot{width:9px;height:9px;flex:0 0 9px;margin-top:4px;border-radius:50%;background:#28a99a;box-shadow:0 0 0 4px #28a99a18}.oil-timeline-item b{font-size:11px;color:#293e55}.oil-timeline-item p{font-size:13px;font-weight:800;margin:5px 0;color:#1d5360}.oil-timeline-item small{font-size:9px;color:#8491a2}
 @media(max-width:760px){.vehicle-detail-head{align-items:flex-start;flex-direction:column}.vehicle-detail-stats{grid-template-columns:repeat(2,1fr)}.vehicle-detail-stats>div:nth-child(2){border-right:0}.vehicle-detail-stats>div:nth-child(-n+2){border-bottom:1px solid var(--line)}.vehicle-card-grid{grid-template-columns:1fr 1fr;gap:10px}.vehicle-card-main{padding:15px;min-height:205px}.vehicle-card h3{font-size:15px}.vehicle-card-km strong{font-size:17px}.vehicle-card-actions{padding:8px;gap:4px}.vehicle-card-actions .action-btn{padding:5px 6px;font-size:9px}}
 @media(max-width:480px){.vehicle-card-grid{grid-template-columns:1fr}.vehicle-card-main{min-height:190px}.vehicle-detail-actions{width:100%}.vehicle-detail-actions .btn{flex:1}}
+
+/* Vistas de historial técnico y documentos por vehículo */
+.record-detail{margin-top:18px;animation:fade .2s ease}
+.record-detail-head{display:flex;align-items:center;justify-content:space-between;gap:18px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:22px;margin-bottom:16px}
+.record-detail-head h2{margin:6px 0;font-size:22px}.record-detail-head p{margin:0;color:var(--muted)}
+.record-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:16px}
+.record-summary>div{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px}
+.record-summary small{display:block;color:var(--muted);font-size:10px;font-weight:800;letter-spacing:.7px}.record-summary b{display:block;font-size:22px;margin-top:7px}
+.record-list{display:grid;gap:12px}
+.record-item,.document-item{display:flex;align-items:flex-start;gap:18px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:17px 19px}
+.record-item-date{min-width:105px;color:#64748b;font-weight:700;font-size:12px;padding-top:2px}
+.record-item p,.document-item p{margin:6px 0;color:#526174}.record-item small,.document-item small{color:var(--muted)}
+.document-item{justify-content:space-between}.document-item h3{margin:10px 0 2px;font-size:16px}
+@media(max-width:700px){.record-detail-head,.document-item{flex-direction:column;align-items:stretch}.record-summary{grid-template-columns:1fr}.record-item{gap:10px;flex-direction:column}.record-item-date{min-width:0}}
