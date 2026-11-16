@@ -32,6 +32,36 @@ function allAlerts(){
  DB.documents.forEach(d=>{const st=docState(d.expiryDate);if(st[1]!=='ok')a.push({level:st[1],title:`${d.type}: ${vehicleLabel(vehicle(d.vehicleId)||{name:'Vehículo'})}`,desc:st[1]==='bad'?`Venció el ${dateFmt(d.expiryDate)}`:`Vence el ${dateFmt(d.expiryDate)}`})});
  return a;
 }
+
+let selectedObservationVehicle=null;
+function renderObservationVehicles(){
+ const cards=$('#observationVehicleCards');
+ if(cards) cards.innerHTML=DB.vehicles.filter(v=>v.active).map(v=>{
+   const list=(DB.observations||[]).filter(o=>String(o.vehicleId)===String(v.id));
+   const pending=list.filter(o=>(o.status||'Pendiente')!=='Resuelto').length;
+   const resolved=list.length-pending;
+   return `<article class="vehicle-card"><button class="vehicle-card-main" onclick="openObservationVehicle('${v.id}')"><span class="vehicle-card-icon">☷</span><span class="vehicle-card-state pill ${pending?'warn':'ok'}">${pending?'Pendientes':'Al día'}</span><h3>${esc(v.name)}</h3><p class="vehicle-plate">${esc(v.plate||'PLACA NO REGISTRADA')}</p><div class="vehicle-card-km"><small>OBSERVACIONES REGISTRADAS</small><strong>${list.length}</strong></div><div class="vehicle-card-footer"><span>${pending} pendientes · ${resolved} resueltas</span><b class="card-arrow">Ver observaciones ↗</b></div></button></article>`;
+ }).join('')||'<div class="panel empty">No hay vehículos activos registrados.</div>';
+ if(selectedObservationVehicle && $('#observationVehicleDetail') && !$('#observationVehicleDetail').hidden) openObservationVehicle(selectedObservationVehicle);
+}
+window.openObservationVehicle=function(id){
+ selectedObservationVehicle=id;
+ const v=vehicle(id); if(!v)return;
+ const list=(DB.observations||[]).filter(o=>String(o.vehicleId)===String(id)).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+ $('#observationsVehiclesView').hidden=true;
+ const d=$('#observationVehicleDetail'); d.hidden=false;
+ d.innerHTML=`<div class="record-detail-head"><div><span class="eyebrow">HISTORIAL DE OBSERVACIONES</span><h2>${esc(v.name)}</h2><p>${esc(v.plate||'Sin placa')} · ${list.length} observación(es)</p></div><div class="record-detail-actions"><button class="btn btn-primary" onclick="addVehicleObservation('${v.id}')">＋ Nueva observación</button><button class="btn btn-light" onclick="closeObservationVehicle()">← Volver a vehículos</button></div></div><div class="observation-detail-list">${list.length?list.map(o=>{const done=(o.status||'Pendiente')==='Resuelto';return `<article class="obs-card ${done?'obs-resolved':''}"><div class="obs-meta"><span>${dateFmt(o.date)}</span><span class="pill ${o.priority==='Alta'?'bad':o.priority==='Baja'?'neutral':'warn'}">Prioridad ${esc(o.priority||'Media')}</span></div><p>${esc(o.text)}</p><div class="obs-meta"><span class="pill ${done?'ok':'warn'}">${done?'Resuelto':'Pendiente'}</span><div class="obs-actions">${done?'<span class="resolved-label">Solucionado</span>':`<button class="btn btn-primary btn-resolve" onclick="setObservation('${o.id}','Resuelto')">✓ Marcar como resuelto</button>`}<button class="action-btn" onclick="editObservation('${o.id}')">Editar</button></div></div></article>`}).join(''):'<div class="panel empty">Este vehículo todavía no tiene observaciones. Puedes registrar la primera.</div>'}</div>`;
+};
+window.closeObservationVehicle=function(){ selectedObservationVehicle=null; $('#observationVehicleDetail').hidden=true; $('#observationsVehiclesView').hidden=false; };
+window.addVehicleObservation=function(id){openObservationModal(id);};
+function openObservationModal(vehicleId=null){
+ openModal('Nueva observación',[
+  {name:'vehicleId',label:'Vehículo',type:'select',options:vehicleOptions(),required:true,value:vehicleId||''},
+  {name:'date',label:'Fecha',type:'date',value:today(),required:true},
+  {name:'priority',label:'Prioridad',type:'select',value:'Media',options:['Baja','Media','Alta'].map(x=>({value:x,label:x}))},
+  {name:'text',label:'Observación / incidencia',type:'textarea',full:true,required:true}
+ ],d=>api('/observations',{method:'POST',body:JSON.stringify({...d,status:'Pendiente'})}));
+}
 function render(){
  const active=DB.vehicles.filter(v=>v.active), alerts=allAlerts(), expired=alerts.filter(a=>a.level==='bad').length;
  $('#alertStrip').hidden=!alerts.length;$('#alertStrip').textContent=alerts.length?`⚠ ${alerts.length} alerta(s): ${expired} vencida(s) y ${alerts.length-expired} próxima(s). Revisa el panel de alertas.`:'';
@@ -59,7 +89,7 @@ function render(){
  const wr=DB.weeklyReviews||[];const weekStart=new Date();weekStart.setDate(weekStart.getDate()-((weekStart.getDay()+6)%7));weekStart.setHours(0,0,0,0);const weekEnd=new Date(weekStart);weekEnd.setDate(weekEnd.getDate()+7);const thisWeek=wr.filter(x=>{const d=new Date(x.date+'T12:00:00');return d>=weekStart&&d<weekEnd});
  $('#weeklyStats').innerHTML=[['Revisiones esta semana',thisWeek.length,'Inspecciones registradas'],['Conformes',thisWeek.filter(x=>x.result==='Conforme').length,'Sin observaciones'],['Requieren atención',thisWeek.filter(x=>x.result==='Requiere atención').length,'Revisar incidencias'],['Vehículos activos',active.length,'Unidades en flota']].map(x=>`<div class="stat"><div class="stat-top"><span>${x[0]}</span></div><strong>${fmt(x[1])}</strong><small>${x[2]}</small></div>`).join('');
  $('#weeklyTable').innerHTML=wr.map(r=>`<tr><td>${dateFmt(r.date)}</td><td class="vehicle-name">${esc(vehicleLabel(vehicle(r.vehicleId)||{name:'Eliminado'}))}</td><td>${fmt(r.km)} km</td><td>${esc(r.tires)}</td><td>${esc(r.brakes)}</td><td>${esc(r.lights)}</td><td>${esc(r.fluids)}</td><td><span class="pill ${r.result==='Conforme'?'ok':r.result==='Requiere atención'?'bad':'warn'}">${esc(r.result)}</span></td><td><button class="action-btn" onclick="editWeekly('${r.id}')">Editar</button> <button class="action-btn danger" onclick="deleteWeekly('${r.id}')">Eliminar</button></td></tr>`).join('')||emptyRow(9);
- $('#observationsList').innerHTML=DB.observations.map(o=>`<article class="obs-card"><div class="obs-meta"><span>${esc(vehicleLabel(vehicle(o.vehicleId)||{name:'Eliminado'}))}</span><span>${dateFmt(o.date)}</span></div><p>${esc(o.text)}</p><div class="obs-meta"><span class="pill ${o.priority==='Alta'?'bad':o.priority==='Baja'?'neutral':'warn'}">${esc(o.priority)}</span><div class="obs-actions"><select aria-label="Estado" onchange="setObservation('${o.id}',this.value)"><option ${o.status==='Pendiente'?'selected':''}>Pendiente</option><option ${o.status==='En proceso'?'selected':''}>En proceso</option><option ${o.status==='Resuelto'?'selected':''}>Resuelto</option></select><button class="action-btn" onclick="editObservation('${o.id}')">Editar</button> <button class="action-btn danger" onclick="deleteObservation('${o.id}')">Eliminar</button></div></div></article>`).join('')||'<div class="panel empty">Todavía no hay observaciones registradas.</div>';
+ renderObservationVehicles();
 
  const hq=($('#historySearch')?.value||'').toLowerCase();
  const hk=$('#historyKind')?.value||'all', hs=$('#historyStatus')?.value||'all';
@@ -170,12 +200,7 @@ function openDocumentModal(existing=null,vehicleId=null){
  const type=existing?.type||'SOAT';openModal(existing?'Editar documento':'Registrar documento',documentFormFields(type,vehicleId,existing||{}),data=>api('/documents'+(existing?'/'+existing.id:''),{method:existing?'PUT':'POST',body:JSON.stringify(data)}));
  const bindType=()=>{const sel=$('#modalFields select[name="type"]');if(!sel)return;sel.addEventListener('change',()=>{const values=Object.fromEntries(new FormData($('#modalForm')).entries());const selected=sel.value;$('#modalFields').innerHTML=fields(documentFormFields(selected,values.vehicleId,values));bindType();});};bindType();
 }
-$('#addObservation').onclick=()=>openModal('Nueva observación',[
- {name:'vehicleId',label:'Vehículo',type:'select',options:vehicleOptions(),required:true},
- {name:'date',label:'Fecha',type:'date',value:today(),required:true},
- {name:'priority',label:'Prioridad',type:'select',options:['Baja','Media','Alta'].map(x=>({value:x,label:x}))},
- {name:'text',label:'Observación / incidencia',type:'textarea',full:true,required:true}
-],d=>api('/observations',{method:'POST',body:JSON.stringify(d)}));
+$('#addObservation').onclick=()=>openObservationModal();
 window.configureOilVehicle=id=>{const v=vehicle(id);if(!v)return;openModal('Configurar control de aceite · '+v.name,[
  {name:'currentKm',label:'Kilometraje actual del odómetro',type:'number',min:0,value:v.currentKm,required:true},
  {name:'oilLastKm',label:'Kilometraje del último cambio realizado',type:'number',min:0,value:activeOilCycle(v)?.startKm??v.oilLastKm??0,required:true},
@@ -193,7 +218,7 @@ $('#addWeekly').onclick=()=>openModal('Registrar revisión semanal',[
 window.deleteWeekly=async id=>{if(!confirm('¿Eliminar esta revisión semanal?'))return;await api('/weekly-reviews/'+id,{method:'DELETE'});await refresh();toast('Revisión eliminada')};
 window.deleteItem=async(type,id)=>{if(!confirm(type==='maintenances'?'¿Anular esta intervención? El registro se conservará en el historial.':'¿Eliminar este registro?'))return;await api('/'+type+'/'+id,{method:'DELETE'});await refresh();toast(type==='maintenances'?'Intervención anulada y conservada':'Registro eliminado')};
 window.deleteObservation=async id=>{if(!confirm('¿Eliminar esta observación?'))return;await api('/observations/'+id,{method:'DELETE'});await refresh();toast('Observación eliminada')};
-window.setObservation=async(id,status)=>{await api('/observations/'+id,{method:'PATCH',body:JSON.stringify({status})});await refresh();toast('Estado actualizado')};
+window.setObservation=async(id,status)=>{const o=DB.observations.find(x=>String(x.id)===String(id));const selected=o?.vehicleId;await api('/observations/'+id,{method:'PATCH',body:JSON.stringify({status})});await refresh();if(selected&&$('#observationVehicleDetail')&&!$('#observationVehicleDetail').hidden)openObservationVehicle(selected);toast(status==='Resuelto'?'Observación marcada como resuelta':'Estado actualizado')};
 function commonMaintenanceFields(m={}){return [
  {name:'vehicleId',label:'Vehículo',type:'select',options:vehicleOptions(),required:true,value:m.vehicleId},
  {name:'type',label:'Tipo de servicio',type:'select',required:true,options:[...new Set(['Preventivo','Correctivo','Reparación','Neumáticos','Otro',...(m.type?[m.type]:[])])].map(x=>({value:x,label:x})),value:m.type},
