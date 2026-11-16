@@ -7,7 +7,17 @@ const today=()=>new Date().toISOString().slice(0,10);
 const dateFmt=s=>s?new Date(s+'T12:00:00').toLocaleDateString('es-PE'):'—';
 const vehicle=id=>DB.vehicles.find(v=>String(v.id)===String(id));
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-async function api(url,opts={}){const r=await fetch(API_BASE+'/api'+url,{headers:{'Content-Type':'application/json',...(opts.headers||{})},...opts});let data={};try{data=await r.json()}catch{}if(!r.ok)throw Error(data.error||'No se pudo completar la operación');return data}
+const AUTH_KEY='martinez_session_token';
+const authToken=()=>sessionStorage.getItem(AUTH_KEY)||'';
+function showLogin(message='Ingresa tus credenciales para continuar.'){
+ const panel=document.getElementById('loginScreen'); if(panel) panel.hidden=false;
+ document.body.classList.add('auth-locked');
+ const msg=document.getElementById('loginMessage'); if(msg) msg.textContent=message;
+}
+function hideLogin(){const panel=document.getElementById('loginScreen');if(panel)panel.hidden=true;document.body.classList.remove('auth-locked');}
+function logout(){sessionStorage.removeItem(AUTH_KEY);DB={vehicles:[],maintenances:[],documents:[],observations:[],weeklyReviews:[],oilCycles:[],settings:{alertDays:30,kmWarning:500}};showLogin('La sesión se cerró correctamente.');}
+async function api(url,opts={}){const headers={'Content-Type':'application/json',...(opts.headers||{})};if(authToken())headers.Authorization=`Bearer ${authToken()}`;const r=await fetch(API_BASE+'/api'+url,{...opts,headers});let data={};try{data=await r.json()}catch{}if(r.status===401){sessionStorage.removeItem(AUTH_KEY);showLogin('Tu sesión venció. Vuelve a iniciar sesión.');}if(!r.ok)throw Error(data.error||'No se pudo completar la operación');return data}
+async function downloadAuthenticated(path,filename){const r=await fetch(API_BASE+path,{headers:{Authorization:`Bearer ${authToken()}`}});if(r.status===401){sessionStorage.removeItem(AUTH_KEY);showLogin('Tu sesión venció. Vuelve a iniciar sesión.');throw new Error('Sesión vencida');}if(!r.ok){let j={};try{j=await r.json()}catch{}throw new Error(j.error||'No se pudo descargar el archivo');}const blob=await r.blob();const url=URL.createObjectURL(blob);const link=document.createElement('a');link.href=url;link.download=filename;document.body.appendChild(link);link.click();link.remove();URL.revokeObjectURL(url)}
 function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600)}
 function kmState(rem){const c=DB.settings||{};const orange=Math.max(0,Number(c.orangeMinKm??100));const yellow=Math.max(orange,Number(c.yellowMinKm??500));const green=Math.max(yellow,Number(c.greenMinKm??1500));return rem<=orange?['Cambio urgente','bad']:rem<=yellow?['Pronto cambio','orange']:rem<=green?['En vigilancia','yellow']:['No urgente','ok']}
 function oilDaysLeft(v){const cycle=activeOilCycle(v);const baseDate=cycle?.startDate||v.oilLastDate;if(!baseDate)return null;const d=new Date(baseDate+'T12:00:00');d.setMonth(d.getMonth()+Number(v.oilIntervalMonths||6));return Math.ceil((new Date(d.toDateString())-new Date(new Date().toDateString()))/86400000)}
@@ -25,7 +35,7 @@ $$('.nav').forEach(b=>b.addEventListener('click',()=>go(b.dataset.page)));
 $$('[data-go]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.go)));
 $('#today').textContent=new Date().toLocaleDateString('es-PE',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
 $('#year').textContent=new Date().getFullYear();
-$('#exportBtn').onclick=()=>{location.href='/api/export';toast('Preparando respaldo de datos')};
+$('#exportBtn').onclick=()=>downloadAuthenticated('/api/export','respaldo-martinez.json').then(()=>toast('Respaldo descargado')).catch(e=>toast(e.message));
 function allAlerts(){
  const a=[];
  DB.vehicles.filter(v=>v.active).forEach(v=>{const rem=oilRemain(v),days=oilDaysLeft(v),st=oilStatus(v);if(st[1]!=='ok')a.push({level:st[1],title:`Cambio de aceite: ${vehicleLabel(v)}`,desc:rem<=0?`Excedido por ${fmt(-rem)} km`:days!==null&&days<=0?`Intervalo de tiempo vencido hace ${fmt(-days)} días`:`Faltan ${fmt(rem)} km o ${days===null?'—':fmt(days)+' días'} para el servicio`});const pd=preventiveNextDate(v),ps=preventiveStatus(v);if(pd&&ps[1]!=='ok')a.push({level:ps[1]==='bad'?'bad':'warn',title:`Chequeo preventivo: ${vehicleLabel(v)}`,desc:`${ps[0]} · fecha programada ${pd.toLocaleDateString('es-PE')}`})});
@@ -169,7 +179,7 @@ window.deleteVehicle=async id=>{const v=vehicle(id);if(!confirm(`¿Eliminar defi
 window.toggleVehicle=async id=>{let v=vehicle(id);if(!confirm(`${v.active?'¿Desactivar':'¿Activar'} ${v.name}?`))return;await api('/vehicles/'+id,{method:'PUT',body:JSON.stringify({...v,active:!v.active})});await refresh();toast('Estado actualizado')};
 window.registerOil=id=>{const v=vehicle(id);if(!v)return toast('Selecciona un vehículo registrado');openModal('Registrar revisión de aceite · '+v.name,[{name:'vehicleId',label:'Vehículo',type:'select',value:v.id,options:DB.vehicles.map(x=>({value:x.id,label:vehicleLabel(x)})),required:true},{name:'date',label:'Fecha que se revisó',type:'date',value:today(),required:true},{name:'km',label:'Kilometraje actual',type:'number',min:0,value:v.currentKm,required:true}],d=>{const selected=vehicle(d.vehicleId);if(!selected)throw Error('No se encontró el vehículo seleccionado');return submitOil(selected,{vehicleId:selected.id,date:d.date,km:d.km})})};
 $('#quickOilBtn')?.addEventListener('click',()=>{const active=DB.vehicles.filter(v=>v.active);if(!active.length)return toast('Primero registra un vehículo en el módulo Vehículos');openModal('Registrar revisión de aceite',[{name:'vehicleId',label:'Vehículo',type:'select',options:active.map(v=>({value:v.id,label:vehicleLabel(v)})),required:true},{name:'date',label:'Fecha que se revisó',type:'date',value:today(),required:true},{name:'km',label:'Kilometraje actual',type:'number',min:0,required:true}],d=>{const v=vehicle(d.vehicleId);if(!v)throw Error('No se encontró el vehículo seleccionado');return submitOil(v,{vehicleId:v.id,date:d.date,km:d.km})})});
-$('#oilReportBtn')?.addEventListener('click',()=>{window.location.href=API_BASE+'/api/export/excel'});
+$('#oilReportBtn')?.addEventListener('click',()=>downloadAuthenticated('/api/export/excel','reporte-gestion-vehicular.xlsx').then(()=>toast('Reporte Excel descargado')).catch(e=>toast(e.message)));
 $('#addHistory').onclick=()=>openModal('Registrar mantenimiento',[
  {name:'vehicleId',label:'Vehículo',type:'select',options:vehicleOptions(),required:true},
  {name:'type',label:'Tipo de servicio',type:'select',required:true,options:['Preventivo','Correctivo','Reparación','Neumáticos','Otro'].map(x=>({value:x,label:x}))},
@@ -199,71 +209,103 @@ function documentFormFields(type,vehicleId,existing={}){
  const v=vehicle(vehicleId||existing.vehicleId)||{};
  const base=[
   {name:'vehicleId',label:'Vehículo',type:'select',options:vehicleOptions(),required:true,value:vehicleId||existing.vehicleId},
-  {name:'type',label:'Tipo de documento',type:'select',required:true,value:type||existing.type,options:DOCUMENT_TYPES.map(x=>({value:x,label:x}))},
+  {name:'type',label:'Tipo de documento',type:'select',required:true,value:type||existing.type,options:DOCUMENT_TYPES.map(x=>({value:x,label:x}))}
+ ];
+ const shared=[
   {name:'number',label:'Número de documento / certificado / póliza',value:existing.number,required:['SOAT','CAT','Revisión técnica','Certificado anual GNV','Certificado anual GLP'].includes(type)},
-  {name:'issueDate',label:'Fecha de emisión',type:'date',value:existing.issueDate},
+  {name:'issueDate',label:'Fecha de emisión / inspección',type:'date',value:existing.issueDate},
   {name:'expiryDate',label:'Fecha de vencimiento',type:'date',value:existing.expiryDate,required:['SOAT','CAT','Revisión técnica','Seguro vehicular','Permiso de circulación','Certificado anual GNV','Certificado anual GLP','Permiso de lunas polarizadas'].includes(type)}
  ];
  const detail={
   'SOAT':[
    {name:'insurer',label:'Compañía aseguradora',value:existing.insurer,required:true},
-   {name:'coverage',label:'Cobertura',value:existing.coverage}
+   {name:'coverage',label:'Cobertura / plan',value:existing.coverage}
   ],
   'CAT':[
-   {name:'issuer',label:'Entidad emisora',value:existing.issuer,required:true},
-   {name:'coverage',label:'Cobertura',value:existing.coverage}
+   {name:'issuer',label:'Entidad emisora del CAT',value:existing.issuer,required:true},
+   {name:'coverage',label:'Cobertura / ámbito',value:existing.coverage}
   ],
   'Ficha técnica':[
    {name:'vin',label:'Número VIN',value:existing.vin||v.vin},
+   {name:'chassis',label:'Número de chasis / serie',value:existing.chassis||v.chassis},
    {name:'engine',label:'Número de motor',value:existing.engine||v.engine},
-   {name:'year',label:'Año de fabricación',type:'number',value:existing.year||v.year}
+   {name:'brand',label:'Marca',value:existing.brand||v.brand},
+   {name:'model',label:'Modelo / versión',value:existing.model||v.model},
+   {name:'year',label:'Año de fabricación / modelo',type:'number',value:existing.year||v.year},
+   {name:'fuel',label:'Combustible',value:existing.fuel||v.fuel},
+   {name:'category',label:'Categoría vehicular',value:existing.category||v.category},
+   {name:'body',label:'Carrocería',value:existing.body||v.body},
+   {name:'color',label:'Color',value:existing.color||v.color},
+   {name:'seats',label:'Número de asientos',type:'number',value:existing.seats||v.seats},
+   {name:'axles',label:'Número de ejes',type:'number',value:existing.axles||v.axles}
   ],
   'Revisión técnica':[
-   {name:'inspectionCenter',label:'Centro de inspección (CITV)',value:existing.inspectionCenter,required:true},
-   {name:'result',label:'Resultado',type:'select',value:existing.result||'Aprobado',options:['Aprobado','Observado','Desaprobado'].map(x=>({value:x,label:x}))},
-   {name:'inspectionReport',label:'Número de informe',value:existing.inspectionReport}
+   {name:'inspectionCenter',label:'Centro de inspección técnica (CITV)',value:existing.inspectionCenter,required:true},
+   {name:'result',label:'Resultado de inspección',type:'select',value:existing.result||'Aprobado',options:['Aprobado','Observado','Desaprobado'].map(x=>({value:x,label:x}))},
+   {name:'inspectionReport',label:'Número de informe (si corresponde)',value:existing.inspectionReport}
   ],
   'Seguro vehicular':[
    {name:'insurer',label:'Compañía aseguradora',value:existing.insurer},
    {name:'coverage',label:'Cobertura contratada',value:existing.coverage},
-   {name:'deductible',label:'Deducible (S/)',value:existing.deductible}
+   {name:'deductible',label:'Deducible',value:existing.deductible}
   ],
   'Tarjeta de propiedad':[
-   {name:'ownerName',label:'Titular / propietario',value:existing.ownerName},
+   {name:'ownerName',label:'Titular / propietario registral',value:existing.ownerName},
+   {name:'registryOffice',label:'Oficina / zona registral',value:existing.registryOffice},
    {name:'registryRecord',label:'Número de partida registral',value:existing.registryRecord},
-   {name:'plate',label:'Placa del vehículo',value:existing.plate||v.plate}
+   {name:'plate',label:'Placa actual',value:existing.plate||v.plate},
+   {name:'previousPlate',label:'Placa anterior (si corresponde)',value:existing.previousPlate},
+   {name:'vin',label:'Número VIN',value:existing.vin||v.vin},
+   {name:'chassis',label:'Número de serie / chasis',value:existing.chassis||v.chassis},
+   {name:'engine',label:'Número de motor',value:existing.engine||v.engine},
+   {name:'brand',label:'Marca',value:existing.brand||v.brand},
+   {name:'model',label:'Modelo / versión',value:existing.model||v.model},
+   {name:'year',label:'Año de fabricación / modelo',type:'number',value:existing.year||v.year},
+   {name:'fuel',label:'Combustible',value:existing.fuel||v.fuel},
+   {name:'category',label:'Categoría / clase',value:existing.category||v.category},
+   {name:'body',label:'Carrocería',value:existing.body||v.body},
+   {name:'color',label:'Color',value:existing.color||v.color},
+   {name:'seats',label:'Número de asientos',type:'number',value:existing.seats||v.seats},
+   {name:'passengers',label:'Número de pasajeros',type:'number',value:existing.passengers||v.passengers},
+   {name:'condition',label:'Condición del vehículo',type:'select',value:existing.condition||'',options:['','Original','Reacondicionado','Reparado'].map(x=>({value:x,label:x||'Seleccionar'}))}
   ],
   'Permiso de circulación':[
    {name:'issuer',label:'Entidad emisora',value:existing.issuer},
-   {name:'authorizationType',label:'Tipo de autorización',value:existing.authorizationType},
-   {name:'operationArea',label:'Ruta / ámbito autorizado',value:existing.operationArea}
+   {name:'authorizationType',label:'Tipo de autorización / modalidad',value:existing.authorizationType},
+   {name:'operationArea',label:'Ámbito o ruta autorizada',value:existing.operationArea},
+   {name:'serviceNumber',label:'Número de habilitación / tarjeta de circulación',value:existing.serviceNumber}
   ],
   'Certificado anual GNV':[
-   {name:'certifyingEntity',label:'Entidad certificadora',value:existing.certifyingEntity,required:true},
-   {name:'chipCode',label:'Código de chip',value:existing.chipCode},
-   {name:'cylinderSerial',label:'Serie del cilindro',value:existing.cylinderSerial}
+   {name:'certifyingEntity',label:'Entidad certificadora autorizada',value:existing.certifyingEntity,required:true},
+   {name:'gasSystem',label:'Sistema de combustible',type:'select',value:'GNV',options:[{value:'GNV',label:'GNV'}]},
+   {name:'chipCode',label:'Código de chip de control de carga',value:existing.chipCode},
+   {name:'cylinderSerial',label:'Número de serie del cilindro',value:existing.cylinderSerial},
+   {name:'conversionDate',label:'Fecha de conversión / instalación',type:'date',value:existing.conversionDate}
   ],
   'Certificado anual GLP':[
-   {name:'certifyingEntity',label:'Entidad certificadora',value:existing.certifyingEntity,required:true},
-   {name:'controlDevice',label:'Código del dispositivo de control',value:existing.controlDevice},
-   {name:'tankSerial',label:'Serie del tanque',value:existing.tankSerial}
+   {name:'certifyingEntity',label:'Entidad certificadora autorizada',value:existing.certifyingEntity,required:true},
+   {name:'gasSystem',label:'Sistema de combustible',type:'select',value:'GLP',options:[{value:'GLP',label:'GLP'}]},
+   {name:'controlDevice',label:'Código del dispositivo de control de carga',value:existing.controlDevice},
+   {name:'tankSerial',label:'Número de serie del tanque',value:existing.tankSerial},
+   {name:'conversionDate',label:'Fecha de conversión / instalación',type:'date',value:existing.conversionDate}
   ],
   'Certificado de conformidad de conversión':[
    {name:'gasSystem',label:'Sistema de conversión',type:'select',value:existing.gasSystem||'GNV',options:['GNV','GLP'].map(x=>({value:x,label:x}))},
    {name:'certifyingEntity',label:'Entidad certificadora',value:existing.certifyingEntity},
+   {name:'conversionWorkshop',label:'Taller de conversión autorizado',value:existing.conversionWorkshop},
    {name:'conversionDate',label:'Fecha de conversión',type:'date',value:existing.conversionDate}
   ],
   'Permiso de lunas polarizadas':[
    {name:'issuer',label:'Entidad emisora',value:existing.issuer},
-   {name:'authorizationCode',label:'Código de autorización',value:existing.authorizationCode},
-   {name:'vehicleUse',label:'Condición autorizada',value:existing.vehicleUse}
+   {name:'authorizationCode',label:'Código / número de autorización',value:existing.authorizationCode},
+   {name:'vehicleUse',label:'Uso / condición autorizada',value:existing.vehicleUse}
   ],
   'Otro':[
    {name:'issuer',label:'Entidad emisora',value:existing.issuer},
-   {name:'reference',label:'Referencia / detalle',value:existing.reference}
+   {name:'reference',label:'Referencia adicional',value:existing.reference}
   ]
  };
- return [...base,...(detail[type]||detail['Otro']),{name:'notes',label:'Observaciones (opcional)',type:'textarea',full:true,value:existing.notes}];
+ return [...base,...shared,...(detail[type]||detail['Otro']),{name:'notes',label:'Observaciones',type:'textarea',full:true,value:existing.notes}];
 }
 function openDocumentModal(existing=null,vehicleId=null){
  const type=existing?.type||'SOAT';openModal(existing?'Editar documento':'Registrar documento',documentFormFields(type,vehicleId,existing||{}),data=>api('/documents'+(existing?'/'+existing.id:''),{method:existing?'PUT':'POST',body:JSON.stringify(data)}));
@@ -306,9 +348,21 @@ window.editWeekly=id=>{const r=DB.weeklyReviews.find(x=>String(x.id)===String(id
  {name:'notes',label:'Observaciones',type:'textarea',value:r.notes,full:true}
 ],data=>api('/weekly-reviews/'+id,{method:'PUT',body:JSON.stringify(data)}))};
 async function refresh(){DB=await api('/data');DB.weeklyReviews=DB.weeklyReviews||[];DB.oilCycles=DB.oilCycles||[];DB.maintenanceAudit=DB.maintenanceAudit||[];render()}
-refresh().catch(e=>toast(e.message));
-// Sincronización entre usuarios: consulta cambios compartidos cada 15 segundos.
-setInterval(()=>{if(!document.hidden)refresh().catch(()=>{});},15000);
+async function initializeSecureApp(){
+ const token=authToken();
+ if(!token){showLogin();return;}
+ try{await api('/auth/me');hideLogin();await refresh();}
+ catch(error){sessionStorage.removeItem(AUTH_KEY);showLogin(error.message||'Inicia sesión para continuar.');}
+}
+document.getElementById('loginForm')?.addEventListener('submit',async event=>{
+ event.preventDefault();const form=event.currentTarget;const button=form.querySelector('button[type="submit"]');const message=document.getElementById('loginMessage');button.disabled=true;button.textContent='Ingresando…';
+ try{const result=await api('/auth/login',{method:'POST',body:JSON.stringify({username:form.elements.username.value.trim(),password:form.elements.password.value})});sessionStorage.setItem(AUTH_KEY,result.token);form.reset();hideLogin();await refresh();toast('Sesión iniciada correctamente');}
+ catch(error){if(message)message.textContent=error.message;}
+ finally{button.disabled=false;button.textContent='Iniciar sesión';}
+});
+document.getElementById('logoutBtn')?.addEventListener('click',logout);
+initializeSecureApp().catch(error=>showLogin(error.message));
+setInterval(()=>{if(authToken()&&!document.hidden)refresh().catch(()=>{});},30000);
 // ==========================================
 // NOTIFICACIONES PUSH - MARTÍNEZ VEHICULAR
 // ==========================================
@@ -365,7 +419,8 @@ async function activarNotificaciones() {
     const response = await fetch(`${API_BASE}/api/push/subscribe`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authToken()}`
       },
       body: JSON.stringify({
         subscription: subscription.toJSON(),
@@ -410,7 +465,7 @@ document.addEventListener('DOMContentLoaded', () => {
 document.addEventListener('DOMContentLoaded', async () => {
   const el = document.getElementById('sideVersion');
   if (!el) return;
-  const screen = '1.3.6';
+  const screen = '1.4.0';
   el.textContent = `v${screen}`;
   try {
     const r = await fetch((window.API_BASE_URL || '').replace(/\/$/, '') + '/api/health');
