@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#101c2d"><title>MARTÍNEZ | Gestión Vehicular</title>
-<link rel="stylesheet" href="/styles.css?v=1.3.6">
+<link rel="stylesheet" href="/styles.css?v=1.3.7">
 </head>
 <body>
 <aside class="sidebar">
@@ -17,7 +17,7 @@
   <button class="nav" data-page="documents"><span>▤</span> Documentos y SOAT</button>
   <button class="nav" data-page="observations"><span>☷</span> Observaciones</button>
   <button class="nav" data-page="settings"><span>⚙</span> Configuración</button>
-  <div class="sidebar-bottom"><div class="status-dot"></div><span>Sistema operativo</span><small id="sideVersion">v1.3.6</small></div>
+  <div class="sidebar-bottom"><div class="status-dot"></div><span>Sistema operativo</span><small id="sideVersion">v1.3.7</small></div>
 </aside>
 <main class="main">
   <header class="topbar"><div><div class="eyebrow">FUNERARIA MARTÍNEZ / OPERACIONES</div><h1 id="pageTitle">Panel general</h1></div><div class="top-actions"><span class="today" id="today"></span><button class="btn btn-light" id="enableNotifications" type="button">🔔 Activar notificaciones</button><button class="btn btn-light" id="exportBtn">↓ Exportar respaldo</button><button class="avatar">FM</button></div></header>
@@ -48,7 +48,13 @@
     </div>
     <div id="documentVehicleDetail" class="record-detail" hidden></div>
   </section>
-  <section id="page-observations" class="page" hidden><div class="toolbar"><div><h2>Observaciones por vehículo</h2><p>Incidencias, recomendaciones y tareas pendientes.</p></div><button class="btn btn-primary" id="addObservation">＋ Nueva observación</button></div><div id="observationsList" class="observation-grid"></div></section>
+  <section id="page-observations" class="page" hidden>
+    <div id="observationsVehiclesView">
+      <div class="toolbar"><div><h2>Observaciones por vehículo</h2><p>Selecciona un vehículo para consultar sus incidencias y trabajos pendientes.</p></div><button class="btn btn-primary" id="addObservation">＋ Nueva observación</button></div>
+      <div id="observationVehicleCards" class="vehicle-card-grid"></div>
+    </div>
+    <div id="observationVehicleDetail" class="record-detail" hidden></div>
+  </section>
   <section id="page-settings" class="page" hidden>
     <div class="toolbar"><div><h2>Configuración del control de aceite</h2><p>Define el intervalo de mantenimiento y los límites del semáforo.</p></div></div>
     <div class="panel"><div class="panel-head"><div><h3>Reglas generales</h3><p>Valores predeterminados para nuevos vehículos y rangos de alerta.</p></div></div>
