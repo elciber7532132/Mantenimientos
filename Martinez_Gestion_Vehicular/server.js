@@ -3,8 +3,11 @@ const path = require('path');
 const fs = require('fs');
 const { Pool } = require('pg');
 const webpush = require('web-push');
+const crypto = require('crypto');
 
 const app = express();
+app.set('trust proxy', 1);
+const loginAttempts = new Map();
 const PORT = process.env.PORT || 3000;
 const DATA_DIR = path.join(__dirname, 'data');
 const JSON_FILE = path.join(DATA_DIR, 'database.json');
@@ -191,6 +194,38 @@ async function writeData(data) {
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 const num = v => Number.isFinite(Number(v)) ? Number(v) : 0;
 const clean = s => String(s ?? '').trim();
+
+// Autenticación administrativa mediante token firmado (sin guardar contraseñas en la base de datos).
+function authSecretReady() {
+  return Boolean(process.env.ADMIN_PASSWORD && process.env.SESSION_SECRET && process.env.SESSION_SECRET.length >= 32);
+}
+function signToken(payload) {
+  const body = Buffer.from(JSON.stringify(payload)).toString('base64url');
+  const signature = crypto.createHmac('sha256', process.env.SESSION_SECRET).update(body).digest('base64url');
+  return `${body}.${signature}`;
+}
+function verifyToken(token) {
+  if (!authSecretReady() || !token || !token.includes('.')) return null;
+  const [body, signature] = token.split('.');
+  const expected = crypto.createHmac('sha256', process.env.SESSION_SECRET).update(body).digest();
+  let supplied;
+  try { supplied = Buffer.from(signature, 'base64url'); } catch { return null; }
+  if (supplied.length !== expected.length || !crypto.timingSafeEqual(supplied, expected)) return null;
+  try {
+    const payload = JSON.parse(Buffer.from(body, 'base64url').toString('utf8'));
+    if (!payload.exp || payload.exp <= Math.floor(Date.now() / 1000)) return null;
+    return payload;
+  } catch { return null; }
+}
+function requireAuth(req, res, next) {
+  if (!authSecretReady()) return res.status(503).json({ error: 'Falta configurar ADMIN_PASSWORD y SESSION_SECRET en las variables de entorno de Render.' });
+  const header = String(req.headers.authorization || '');
+  const token = header.startsWith('Bearer ') ? header.slice(7) : '';
+  const user = verifyToken(token);
+  if (!user) return res.status(401).json({ error: 'Sesión no válida o vencida. Inicia sesión nuevamente.' });
+  req.authUser = user;
+  next();
+}
 function auditMaintenance(data, action, record, detail='') {
   const isOil = String(record.type || '').toLowerCase().includes('aceite');
   logActivity(data, action, record.vehicleId, detail || `${record.type || ''} · Chofer: ${record.driverName || 'No indicado'} · Taller: ${record.provider || 'No indicado'}`, isOil ? 'Aceite' : 'Mantenimiento');
@@ -508,8 +543,39 @@ async function checkAutomaticAlerts() {
   }
 }
 
+app.post('/api/auth/login', (req, res) => {
+  if (!authSecretReady()) return res.status(503).json({ error: 'El acceso seguro aún no está configurado. Revisa ADMIN_PASSWORD y SESSION_SECRET en Render.' });
+  const ip = req.ip || req.socket.remoteAddress || 'unknown';
+  const attempt = loginAttempts.get(ip) || { count: 0, firstAt: Date.now(), blockedUntil: 0 };
+  if (attempt.blockedUntil > Date.now()) return res.status(429).json({ error: 'Demasiados intentos. Espera 15 minutos antes de volver a intentar.' });
+  if (Date.now() - attempt.firstAt > 15 * 60 * 1000) { attempt.count = 0; attempt.firstAt = Date.now(); attempt.blockedUntil = 0; }
+  const username = clean(req.body?.username);
+  const password = String(req.body?.password || '');
+  const expectedUser = process.env.ADMIN_USERNAME || 'admin';
+  const a = Buffer.from(username);
+  const b = Buffer.from(expectedUser);
+  const userOk = a.length === b.length && crypto.timingSafeEqual(a, b);
+  const passA = Buffer.from(password);
+  const passB = Buffer.from(process.env.ADMIN_PASSWORD);
+  const passOk = passA.length === passB.length && crypto.timingSafeEqual(passA, passB);
+  if (!userOk || !passOk) {
+    attempt.count += 1;
+    if (attempt.count >= 5) attempt.blockedUntil = Date.now() + 15 * 60 * 1000;
+    loginAttempts.set(ip, attempt);
+    return res.status(401).json({ error: 'Usuario o contraseña incorrectos.' });
+  }
+  loginAttempts.delete(ip);
+  const now = Math.floor(Date.now() / 1000);
+  const token = signToken({ sub: expectedUser, role: 'admin', iat: now, exp: now + 8 * 60 * 60 });
+  res.json({ token, user: { username: expectedUser, role: 'admin' }, expiresIn: 28800 });
+});
+
+app.get('/api/auth/me', requireAuth, (req, res) => {
+  res.json({ authenticated: true, user: { username: req.authUser.sub, role: req.authUser.role } });
+});
+
 app.get('/api/health', (req, res) => {
-  res.json({ ok: true, service: 'Martinez Gestion Vehicular', version: '1.3.4' });
+  res.json({ ok: true, service: 'Martinez Gestion Vehicular', version: '1.4.0' });
 });
 
 app.get('/api/push/public-key', (req, res) => {
@@ -517,6 +583,11 @@ app.get('/api/push/public-key', (req, res) => {
     return res.status(503).json({ error: 'Las notificaciones no están configuradas en el servidor.' });
   }
   res.json({ publicKey: VAPID_PUBLIC_KEY });
+});
+
+app.use('/api', (req, res, next) => {
+  if (req.path === '/health' || req.path === '/auth/login' || req.path === '/auth/me' || req.path === '/push/public-key') return next();
+  return requireAuth(req, res, next);
 });
 
 app.post('/api/push/subscribe', async (req, res) => {
@@ -885,17 +956,19 @@ app.post('/api/documents', async (req, res) => {
   try {
     const d = await readData();
     const b = req.body;
-    if (!b.vehicleId || !clean(b.type) || !b.expiryDate) {
-      return res.status(400).json({ error: 'Completa vehículo, documento y vencimiento.' });
+    const expiryRequired = ['SOAT','CAT','Revisión técnica','Seguro vehicular','Permiso de circulación','Certificado anual GNV','Certificado anual GLP','Permiso de lunas polarizadas'].includes(clean(b.type));
+    if (!b.vehicleId || !clean(b.type) || (expiryRequired && !b.expiryDate)) {
+      return res.status(400).json({ error: 'Completa el vehículo, tipo de documento y los campos obligatorios.' });
     }
 
     const doc = {
+      ...b,
       id: uid(),
       vehicleId: b.vehicleId,
       type: clean(b.type),
       number: clean(b.number),
       issueDate: b.issueDate || null,
-      expiryDate: b.expiryDate,
+      expiryDate: b.expiryDate || null,
       notes: clean(b.notes),
       createdAt: new Date().toISOString()
     };
