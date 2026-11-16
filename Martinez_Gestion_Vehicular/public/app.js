@@ -12,7 +12,7 @@ function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show'
 function kmState(rem){const c=DB.settings||{};const orange=Math.max(0,Number(c.orangeMinKm??100));const yellow=Math.max(orange,Number(c.yellowMinKm??500));const green=Math.max(yellow,Number(c.greenMinKm??1500));return rem<=orange?['Cambio urgente','bad']:rem<=yellow?['Pronto cambio','orange']:rem<=green?['En vigilancia','yellow']:['No urgente','ok']}
 function oilDaysLeft(v){const cycle=activeOilCycle(v);const baseDate=cycle?.startDate||v.oilLastDate;if(!baseDate)return null;const d=new Date(baseDate+'T12:00:00');d.setMonth(d.getMonth()+Number(v.oilIntervalMonths||6));return Math.ceil((new Date(d.toDateString())-new Date(new Date().toDateString()))/86400000)}
 function oilStatus(v){return kmState(oilRemain(v))}
-function docState(date){const days=Math.ceil((new Date(date+'T23:59:59')-new Date())/86400000);return days<0?['Vencido','bad']:days<=30?['Por vencer','warn']:['Vigente','ok']}
+function docState(date){if(!date)return ['Sin vencimiento','neutral'];const days=Math.ceil((new Date(date+'T23:59:59')-new Date())/86400000);return days<0?['Vencido','bad']:days<=30?['Por vencer','warn']:['Vigente','ok']}
 function activeOilCycle(v){return (DB.oilCycles||[]).find(c=>String(c.vehicleId)===String(v.id)&&c.status==='En curso')}
 function oilRemain(v){const c=activeOilCycle(v);const limit=c?Number(c.plannedKm):Number(v.oilNextKm||Number(v.oilLastKm||0)+Number(v.oilInterval||DB.settings?.oilIntervalKm||5000));return limit-Number(v.currentKm||0)}
 function preventiveNextDate(v){if(!v.preventiveLastDate)return null;const d=new Date(v.preventiveLastDate+'T12:00:00');const n=Math.max(1,Number(v.preventiveIntervalValue||1));const u=v.preventiveIntervalUnit||'months';if(u==='days')d.setDate(d.getDate()+n);else if(u==='weeks')d.setDate(d.getDate()+7*n);else if(u==='years')d.setFullYear(d.getFullYear()+n);else d.setMonth(d.getMonth()+n);return d}
@@ -29,7 +29,7 @@ $('#exportBtn').onclick=()=>{location.href='/api/export';toast('Preparando respa
 function allAlerts(){
  const a=[];
  DB.vehicles.filter(v=>v.active).forEach(v=>{const rem=oilRemain(v),days=oilDaysLeft(v),st=oilStatus(v);if(st[1]!=='ok')a.push({level:st[1],title:`Cambio de aceite: ${vehicleLabel(v)}`,desc:rem<=0?`Excedido por ${fmt(-rem)} km`:days!==null&&days<=0?`Intervalo de tiempo vencido hace ${fmt(-days)} días`:`Faltan ${fmt(rem)} km o ${days===null?'—':fmt(days)+' días'} para el servicio`});const pd=preventiveNextDate(v),ps=preventiveStatus(v);if(pd&&ps[1]!=='ok')a.push({level:ps[1]==='bad'?'bad':'warn',title:`Chequeo preventivo: ${vehicleLabel(v)}`,desc:`${ps[0]} · fecha programada ${pd.toLocaleDateString('es-PE')}`})});
- DB.documents.forEach(d=>{const st=docState(d.expiryDate);if(st[1]!=='ok')a.push({level:st[1],title:`${d.type}: ${vehicleLabel(vehicle(d.vehicleId)||{name:'Vehículo'})}`,desc:st[1]==='bad'?`Venció el ${dateFmt(d.expiryDate)}`:`Vence el ${dateFmt(d.expiryDate)}`})});
+ DB.documents.forEach(d=>{const st=docState(d.expiryDate);if(st[1]!=='ok'&&st[1]!=='neutral')a.push({level:st[1],title:`${d.type}: ${vehicleLabel(vehicle(d.vehicleId)||{name:'Vehículo'})}`,desc:st[1]==='bad'?`Venció el ${dateFmt(d.expiryDate)}`:`Vence el ${dateFmt(d.expiryDate)}`})});
  return a;
 }
 
@@ -135,7 +135,7 @@ function openHistoryVehicle(id){
  window.scrollTo(0,0);
 }
 window.closeHistoryVehicle=()=>{$('#historyVehicleDetail').hidden=true;$('#historyVehiclesView').hidden=false;window.scrollTo(0,0)};
-window.openDocumentVehicle=id=>{const v=vehicle(id);if(!v)return;const docs=DB.documents.filter(x=>String(x.vehicleId)===String(id)).sort((a,b)=>String(a.expiryDate||'').localeCompare(String(b.expiryDate||'')));$('#documentsVehiclesView').hidden=true;const d=$('#documentVehicleDetail');d.hidden=false;d.innerHTML=`<div class="record-detail-head"><div><span class="eyebrow">DOCUMENTOS DEL VEHÍCULO</span><h2>${esc(v.name)}</h2><p>${esc(v.plate||'Sin placa registrada')}</p></div><div><button class="btn btn-primary" onclick="registerDocumentForVehicle('${v.id}')">＋ Registrar documento</button> <button class="btn btn-light" onclick="closeDocumentVehicle()">← Volver a vehículos</button></div></div><div class="record-list">${docs.length?docs.map(x=>{const st=docState(x.expiryDate);return `<article class="document-item"><div><span class="pill ${st[1]}">${st[0]}</span><h3>${esc(x.type)}</h3><p>${esc(x.number||'Sin número / referencia')}</p><small>Emisión: ${dateFmt(x.issueDate)} · Vencimiento: ${dateFmt(x.expiryDate)}</small>${x.insurer?`<p>Aseguradora: ${esc(x.insurer)}</p>`:''}${x.inspectionCenter?`<p>Centro de inspección: ${esc(x.inspectionCenter)}</p>`:''}${x.notes?`<p>${esc(x.notes)}</p>`:''}</div><div><button class="action-btn" onclick="editDocument('${x.id}')">Editar</button> <button class="action-btn danger" onclick="deleteItem('documents','${x.id}')">Eliminar</button></div></article>`}).join(''):'<div class="empty">Este vehículo todavía no tiene documentos registrados.</div>'}</div>`;window.scrollTo(0,0)};
+window.openDocumentVehicle=id=>{const v=vehicle(id);if(!v)return;const docs=DB.documents.filter(x=>String(x.vehicleId)===String(id)).sort((a,b)=>String(a.expiryDate||'').localeCompare(String(b.expiryDate||'')));$('#documentsVehiclesView').hidden=true;const d=$('#documentVehicleDetail');d.hidden=false;d.innerHTML=`<div class="record-detail-head"><div><span class="eyebrow">DOCUMENTOS DEL VEHÍCULO</span><h2>${esc(v.name)}</h2><p>${esc(v.plate||'Sin placa registrada')}</p></div><div><button class="btn btn-primary" onclick="registerDocumentForVehicle('${v.id}')">＋ Registrar documento</button> <button class="btn btn-light" onclick="closeDocumentVehicle()">← Volver a vehículos</button></div></div><div class="record-list">${docs.length?docs.map(x=>{const st=docState(x.expiryDate);return `<article class="document-item"><div><span class="pill ${st[1]}">${st[0]}</span><h3>${esc(x.type)}</h3><p>${esc(x.number||'Sin número / referencia')}</p><small>Emisión: ${dateFmt(x.issueDate)} · ${x.expiryDate?'Vencimiento: '+dateFmt(x.expiryDate):'Documento sin vencimiento'}</small>${x.insurer?`<p>Aseguradora: ${esc(x.insurer)}</p>`:''}${x.inspectionCenter?`<p>Centro de inspección: ${esc(x.inspectionCenter)}</p>`:''}${[['Titular',x.ownerName],['Oficina registral',x.registryOffice],['Partida registral',x.registryRecord],['Placa',x.plate],['Placa anterior',x.previousPlate],['VIN',x.vin],['Chasis / serie',x.chassis],['Motor',x.engine],['Marca',x.brand],['Modelo / versión',x.model],['Año',x.year],['Combustible',x.fuel],['Categoría',x.category],['Carrocería',x.body],['Color',x.color],['Asientos',x.seats],['Pasajeros',x.passengers],['Condición',x.condition],['Entidad emisora',x.issuer],['Entidad certificadora',x.certifyingEntity],['Chip / control de carga',x.chipCode||x.controlDevice],['Cilindro / tanque',x.cylinderSerial||x.tankSerial],['Sistema de gas',x.gasSystem],['Taller de conversión',x.conversionWorkshop],['Resultado',x.result],['Modalidad',x.authorizationType],['Ámbito / ruta',x.operationArea],['Cobertura',x.coverage],['Deducible',x.deductible]].filter(p=>p[1]!==undefined&&p[1]!==null&&p[1]!=='').map(p=>`<p>${p[0]}: ${esc(p[1])}</p>`).join('')}${x.notes?`<p>${esc(x.notes)}</p>`:''}</div><div><button class="action-btn" onclick="editDocument('${x.id}')">Editar</button> <button class="action-btn danger" onclick="deleteItem('documents','${x.id}')">Eliminar</button></div></article>`}).join(''):'<div class="empty">Este vehículo todavía no tiene documentos registrados.</div>'}</div>`;window.scrollTo(0,0)};
 window.closeDocumentVehicle=()=>{$('#documentVehicleDetail').hidden=true;$('#documentsVehiclesView').hidden=false;window.scrollTo(0,0)};
 window.registerDocumentForVehicle=id=>openDocumentModal(null,id);
 function emptyRow(n){return `<tr><td colspan="${n}" class="empty">No hay registros para mostrar.</td></tr>`}
@@ -189,12 +189,81 @@ $('#addHistory').onclick=()=>openModal('Registrar mantenimiento',[
 $('#dashAddMaintenance')?.addEventListener('click',()=>{go('history');$('#addHistory').click()});
 window.annulHistory=async id=>{if(!confirm('¿Anular esta intervención? El registro permanecerá en el historial.'))return;await api('/maintenances/'+id,{method:'DELETE'});await refresh();toast('Intervención anulada; se conservó en el historial')};
 $('#addDocument').onclick=()=>openDocumentModal();
+const DOCUMENT_TYPES=[
+ 'SOAT','CAT','Ficha técnica','Revisión técnica','Seguro vehicular',
+ 'Tarjeta de propiedad','Permiso de circulación','Certificado anual GNV',
+ 'Certificado anual GLP','Certificado de conformidad de conversión',
+ 'Permiso de lunas polarizadas','Otro'
+];
 function documentFormFields(type,vehicleId,existing={}){
- const base=[{name:'vehicleId',label:'Vehículo',type:'select',options:vehicleOptions(),required:true,value:vehicleId||existing.vehicleId},{name:'type',label:'Tipo de documento',type:'select',required:true,value:type||existing.type,options:['SOAT','Ficha técnica','Revisión técnica','Seguro vehicular','Tarjeta de propiedad','Permiso de circulación','Otro'].map(x=>({value:x,label:x}))}];
- const specific=type==='SOAT'?[{name:'number',label:'Número de póliza SOAT',required:true,value:existing.number},{name:'insurer',label:'Compañía aseguradora',required:true,value:existing.insurer},{name:'issueDate',label:'Fecha de emisión',type:'date',value:existing.issueDate},{name:'expiryDate',label:'Fecha de vencimiento',type:'date',required:true,value:existing.expiryDate}]
- :['Ficha técnica','Revisión técnica'].includes(type)?[{name:'number',label:'Número de certificado',required:true,value:existing.number},{name:'inspectionCenter',label:'Centro de inspección / entidad',value:existing.inspectionCenter},{name:'issueDate',label:'Fecha de inspección / emisión',type:'date',value:existing.issueDate},{name:'expiryDate',label:'Fecha de próxima revisión / vencimiento',type:'date',required:true,value:existing.expiryDate},{name:'result',label:'Resultado',type:'select',value:existing.result||'Aprobado',options:['Aprobado','Observado','Desaprobado'].map(x=>({value:x,label:x}))}]
- :[{name:'number',label:type==='Seguro vehicular'?'Número de póliza':'Número / referencia',value:existing.number},{name:'issueDate',label:'Fecha de emisión',type:'date',value:existing.issueDate},{name:'expiryDate',label:'Fecha de vencimiento',type:'date',required:true,value:existing.expiryDate}];
- return [...base,...specific,{name:'notes',label:'Observaciones',type:'textarea',full:true,value:existing.notes}];
+ const v=vehicle(vehicleId||existing.vehicleId)||{};
+ const base=[
+  {name:'vehicleId',label:'Vehículo',type:'select',options:vehicleOptions(),required:true,value:vehicleId||existing.vehicleId},
+  {name:'type',label:'Tipo de documento',type:'select',required:true,value:type||existing.type,options:DOCUMENT_TYPES.map(x=>({value:x,label:x}))},
+  {name:'number',label:'Número de documento / certificado / póliza',value:existing.number,required:['SOAT','CAT','Revisión técnica','Certificado anual GNV','Certificado anual GLP'].includes(type)},
+  {name:'issueDate',label:'Fecha de emisión',type:'date',value:existing.issueDate},
+  {name:'expiryDate',label:'Fecha de vencimiento',type:'date',value:existing.expiryDate,required:['SOAT','CAT','Revisión técnica','Seguro vehicular','Permiso de circulación','Certificado anual GNV','Certificado anual GLP','Permiso de lunas polarizadas'].includes(type)}
+ ];
+ const detail={
+  'SOAT':[
+   {name:'insurer',label:'Compañía aseguradora',value:existing.insurer,required:true},
+   {name:'coverage',label:'Cobertura',value:existing.coverage}
+  ],
+  'CAT':[
+   {name:'issuer',label:'Entidad emisora',value:existing.issuer,required:true},
+   {name:'coverage',label:'Cobertura',value:existing.coverage}
+  ],
+  'Ficha técnica':[
+   {name:'vin',label:'Número VIN',value:existing.vin||v.vin},
+   {name:'engine',label:'Número de motor',value:existing.engine||v.engine},
+   {name:'year',label:'Año de fabricación',type:'number',value:existing.year||v.year}
+  ],
+  'Revisión técnica':[
+   {name:'inspectionCenter',label:'Centro de inspección (CITV)',value:existing.inspectionCenter,required:true},
+   {name:'result',label:'Resultado',type:'select',value:existing.result||'Aprobado',options:['Aprobado','Observado','Desaprobado'].map(x=>({value:x,label:x}))},
+   {name:'inspectionReport',label:'Número de informe',value:existing.inspectionReport}
+  ],
+  'Seguro vehicular':[
+   {name:'insurer',label:'Compañía aseguradora',value:existing.insurer},
+   {name:'coverage',label:'Cobertura contratada',value:existing.coverage},
+   {name:'deductible',label:'Deducible (S/)',value:existing.deductible}
+  ],
+  'Tarjeta de propiedad':[
+   {name:'ownerName',label:'Titular / propietario',value:existing.ownerName},
+   {name:'registryRecord',label:'Número de partida registral',value:existing.registryRecord},
+   {name:'plate',label:'Placa del vehículo',value:existing.plate||v.plate}
+  ],
+  'Permiso de circulación':[
+   {name:'issuer',label:'Entidad emisora',value:existing.issuer},
+   {name:'authorizationType',label:'Tipo de autorización',value:existing.authorizationType},
+   {name:'operationArea',label:'Ruta / ámbito autorizado',value:existing.operationArea}
+  ],
+  'Certificado anual GNV':[
+   {name:'certifyingEntity',label:'Entidad certificadora',value:existing.certifyingEntity,required:true},
+   {name:'chipCode',label:'Código de chip',value:existing.chipCode},
+   {name:'cylinderSerial',label:'Serie del cilindro',value:existing.cylinderSerial}
+  ],
+  'Certificado anual GLP':[
+   {name:'certifyingEntity',label:'Entidad certificadora',value:existing.certifyingEntity,required:true},
+   {name:'controlDevice',label:'Código del dispositivo de control',value:existing.controlDevice},
+   {name:'tankSerial',label:'Serie del tanque',value:existing.tankSerial}
+  ],
+  'Certificado de conformidad de conversión':[
+   {name:'gasSystem',label:'Sistema de conversión',type:'select',value:existing.gasSystem||'GNV',options:['GNV','GLP'].map(x=>({value:x,label:x}))},
+   {name:'certifyingEntity',label:'Entidad certificadora',value:existing.certifyingEntity},
+   {name:'conversionDate',label:'Fecha de conversión',type:'date',value:existing.conversionDate}
+  ],
+  'Permiso de lunas polarizadas':[
+   {name:'issuer',label:'Entidad emisora',value:existing.issuer},
+   {name:'authorizationCode',label:'Código de autorización',value:existing.authorizationCode},
+   {name:'vehicleUse',label:'Condición autorizada',value:existing.vehicleUse}
+  ],
+  'Otro':[
+   {name:'issuer',label:'Entidad emisora',value:existing.issuer},
+   {name:'reference',label:'Referencia / detalle',value:existing.reference}
+  ]
+ };
+ return [...base,...(detail[type]||detail['Otro']),{name:'notes',label:'Observaciones (opcional)',type:'textarea',full:true,value:existing.notes}];
 }
 function openDocumentModal(existing=null,vehicleId=null){
  const type=existing?.type||'SOAT';openModal(existing?'Editar documento':'Registrar documento',documentFormFields(type,vehicleId,existing||{}),data=>api('/documents'+(existing?'/'+existing.id:''),{method:existing?'PUT':'POST',body:JSON.stringify(data)}));
