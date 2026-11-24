@@ -147,16 +147,34 @@ function historyCategory(r){
 }
 function renderHistoryVehicleRecords(){
  const all=window.historyVehicleRecords||[],filter=$('#historyTechnicalType')?.value||'all',q=($('#historyTechnicalSearch')?.value||'').trim().toLowerCase();
- const filtered=all.filter(r=>(filter==='all'||historyCategory(r)===filter)&&(!q||`${r.kind} ${r.detail} ${r.status}`.toLowerCase().includes(q)));
+ const filtered=all.filter(r=>(filter==='all'||historyCategory(r)===filter)&&(!q||`${r.kind} ${r.detail} ${r.status} ${r.searchText||''}`.toLowerCase().includes(q)));
  const list=$('#historyTechnicalRecords');
- if(list)list.innerHTML=filtered.length?filtered.map(r=>`<article class="record-item"><div class="record-item-date">${dateFmt(r.date)}</div><div><b>${esc(r.kind)}</b><p>${esc(r.detail||'Sin detalle adicional')}</p><small>${r.km!=null?fmt(r.km)+' km · ':''}${esc(r.status||'Registrado')}</small></div></article>`).join(''):'<div class="empty">No hay registros que coincidan con este filtro.</div>';
+ const value=(v)=>v!==undefined&&v!==null&&String(v).trim()!==''?esc(String(v)):'—';
+ const field=(label,v)=>v!==undefined&&v!==null&&String(v).trim()!==''?`<div class="tech-field"><span>${label}</span><b>${value(v)}</b></div>`:'';
+ if(list)list.innerHTML=filtered.length?filtered.map(r=>{
+  const d=r.raw||{},isReview=r.kind==='Revisión semanal',isObs=r.kind==='Observación / incidencia';
+  const status=r.status||'Registrado',statusClass=/realizado|conforme|cerrad/i.test(status)?'is-good':/pendiente|atención/i.test(status)?'is-warn':/anulad|crític/i.test(status)?'is-bad':'';
+  const mainDetail=d.description||d.text||r.detail||'Sin descripción registrada';
+  const detailFields=isReview
+   ? field('Resultado',d.result||r.status)+field('Kilometraje',d.km!=null?fmt(d.km)+' km':null)+field('Observaciones',d.notes)
+   : isObs
+    ? field('Prioridad',d.priority)+field('Estado',d.status)+field('Kilometraje',d.km!=null?fmt(d.km)+' km':null)
+    : field('Categoría de trabajo',d.workKind||r.workKind)+field('Kilometraje registrado',d.km!=null?fmt(d.km)+' km':null)+field('Repuestos / materiales',d.parts)+field('Taller / proveedor',d.provider)+field('Técnico responsable',d.technician)+field('Acción del ciclo',d.oilCycleAction)+field('Próximo servicio',d.nextKm!=null?fmt(d.nextKm)+' km':null);
+  return `<article class="tech-record-card">
+   <div class="tech-record-top"><div class="tech-record-date"><span>FECHA DE REGISTRO</span><b>${dateFmt(r.date)}</b></div><div class="tech-record-heading"><span class="tech-kind">${esc(r.kind)}</span><span class="tech-status ${statusClass}">${value(status)}</span></div></div>
+   <div class="tech-record-body"><div class="tech-description"><span class="tech-section-label">DETALLE DEL TRABAJO / REPORTE</span><p>${value(mainDetail)}</p></div>
+    <div class="tech-fields">${detailFields}</div>
+    ${d.notes&&!isReview?`<div class="tech-notes"><span>OBSERVACIONES ADICIONALES</span><p>${value(d.notes)}</p></div>`:''}
+   </div>
+  </article>`;
+ }).join(''):'<div class="empty">No hay registros que coincidan con este filtro.</div>';
  const count=$('#historyTechnicalCount');if(count)count.textContent=`Mostrando ${filtered.length} de ${all.length} registros`;
 }
 function openHistoryVehicle(id){
  const v=vehicle(id);if(!v)return;
- const records=(DB.maintenances||[]).filter(m=>String(m.vehicleId)===String(id)&&(m.status||'Realizado')!=='Anulado').map(m=>({date:m.date,kind:/aceite/i.test(m.type||'')?'Cambio de aceite':(m.type||m.workKind||'Mantenimiento'),workKind:m.workKind||'',detail:[m.description,m.parts&&'Repuestos: '+m.parts,m.provider&&'Taller: '+m.provider,m.technician&&'Responsable: '+m.technician].filter(Boolean).join(' · '),km:m.km,status:m.status||'Realizado'}));
- (DB.weeklyReviews||[]).filter(r=>String(r.vehicleId)===String(id)).forEach(r=>records.push({date:r.date,kind:'Revisión semanal',detail:`Resultado: ${r.result||'—'}${r.notes?' · '+r.notes:''}`,km:r.km,status:r.result||'Registrada'}));
- (DB.observations||[]).filter(o=>String(o.vehicleId)===String(id)).forEach(o=>records.push({date:o.date,kind:'Observación / incidencia',detail:o.text||'Sin detalle',km:null,status:o.status||o.priority||'Registrada'}));
+ const records=(DB.maintenances||[]).filter(m=>String(m.vehicleId)===String(id)&&(m.status||'Realizado')!=='Anulado').map(m=>({date:m.date,kind:/aceite/i.test(m.type||'')?'Cambio de aceite':(m.type||m.workKind||'Mantenimiento'),workKind:m.workKind||'',detail:[m.description,m.parts&&'Repuestos: '+m.parts,m.provider&&'Taller: '+m.provider,m.technician&&'Responsable: '+m.technician].filter(Boolean).join(' · '),km:m.km,status:m.status||'Realizado',raw:m,searchText:[m.parts,m.provider,m.technician,m.workKind,m.oilCycleAction].filter(Boolean).join(' ')}));
+ (DB.weeklyReviews||[]).filter(r=>String(r.vehicleId)===String(id)).forEach(r=>records.push({date:r.date,kind:'Revisión semanal',detail:`Resultado: ${r.result||'—'}${r.notes?' · '+r.notes:''}`,km:r.km,status:r.result||'Registrada',raw:r,searchText:r.notes||''}));
+ (DB.observations||[]).filter(o=>String(o.vehicleId)===String(id)).forEach(o=>records.push({date:o.date,kind:'Observación / incidencia',detail:o.text||'Sin detalle',km:o.km??null,status:o.status||o.priority||'Registrada',raw:o,searchText:o.priority||''}));
  records.sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));window.historyVehicleRecords=records;
  $('#historyVehiclesView').hidden=true;const d=$('#historyVehicleDetail');d.hidden=false;
  const interventions=records.filter(x=>!['Revisión semanal','Observación / incidencia'].includes(x.kind)).length,reviews=records.length-interventions;
