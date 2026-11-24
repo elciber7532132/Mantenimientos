@@ -203,7 +203,6 @@ $('#addHistory').onclick=()=>openModal('Registrar mantenimiento',[
  {name:'vehicleId',label:'Vehículo',type:'select',options:vehicleOptions(),required:true},
  {name:'type',label:'Tipo de servicio',type:'select',required:true,options:['Preventivo','Correctivo','Reparación','Neumáticos','Otro'].map(x=>({value:x,label:x}))},
  {name:'date',label:'Fecha del servicio',type:'date',value:today(),required:true},
- {name:'km',label:'Kilometraje al servicio',type:'number',min:0,required:true},
  {name:'driverName',label:'Nombre del chofer'},
  {name:'provider',label:'Taller / proveedor'},
  {name:'technician',label:'Mecánico / técnico responsable'},
@@ -351,7 +350,7 @@ window.setObservation=async(id,status)=>{const o=DB.observations.find(x=>String(
 function commonMaintenanceFields(m={}){return [
  {name:'vehicleId',label:'Vehículo',type:'select',options:vehicleOptions(),required:true,value:m.vehicleId},
  {name:'type',label:'Tipo de servicio',type:'select',required:true,options:[...new Set(['Preventivo','Correctivo','Reparación','Neumáticos','Otro',...(m.type?[m.type]:[])])].map(x=>({value:x,label:x})),value:m.type},
- {name:'date',label:'Fecha del servicio',type:'date',value:m.date||today(),required:true},{name:'km',label:'Kilometraje',type:'number',min:0,value:m.km,required:true},
+ {name:'date',label:'Fecha del servicio',type:'date',value:m.date||today(),required:true},
 {name:'driverName',label:'Nombre del chofer',value:m.driverName},{name:'provider',label:'Taller / proveedor',value:m.provider},{name:'technician',label:'Mecánico / técnico responsable',value:m.technician},{name:'laborCost',label:'Mano de obra (S/)',type:'number',min:0,step:'0.01',value:m.laborCost},{name:'partsCost',label:'Repuestos (S/)',type:'number',min:0,step:'0.01',value:m.partsCost},{name:'cost',label:'Costo total (S/)',type:'number',min:0,step:'0.01',value:m.totalCost??m.cost},{name:'parts',label:'Repuestos',value:m.parts},{name:'status',label:'Estado',type:'select',options:['Realizado','Pendiente','Anulado'].map(x=>({value:x,label:x})),value:m.status||'Realizado'},{name:'description',label:'Detalle del trabajo / observaciones',type:'textarea',value:m.description,full:true}
 ]}
 window.editMaintenance=id=>{const m=DB.maintenances.find(x=>String(x.id)===String(id));openModal('Editar mantenimiento',commonMaintenanceFields(m),d=>api('/maintenances/'+id,{method:'PUT',body:JSON.stringify(d)}))};
