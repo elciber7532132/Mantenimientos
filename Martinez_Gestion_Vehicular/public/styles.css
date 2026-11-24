@@ -78,3 +78,27 @@ body.auth-locked>.sidebar,body.auth-locked>.main{visibility:hidden}
 .login-brand{display:flex;align-items:center;gap:12px;margin-bottom:22px;color:#17283d}.login-brand .brand-mark{background:#d7f4f2;color:#123047}.login-brand b{display:block;letter-spacing:2px;font-size:15px}.login-brand small{display:block;color:#718096;font-size:9px;letter-spacing:1.8px;margin-top:4px}
 .login-card h1{font-size:27px;margin:0;color:#17283d}.login-card>p{margin:0 0 10px;color:#718096;line-height:1.5}.login-card label{font-size:12px;font-weight:750;color:#34465b;margin-top:5px}.login-card input{width:100%;border:1px solid #dce4ec;border-radius:9px;padding:13px 14px;font:inherit;outline:none}.login-card input:focus{border-color:#159b91;box-shadow:0 0 0 3px #159b9120}.login-submit{width:100%;padding:13px;margin-top:7px}.login-message{min-height:18px!important;margin:2px 0!important;color:#a33d3d!important;font-size:12px}.login-foot{text-align:center;color:#8996a6;margin-top:8px;font-size:10px}
 @media(max-width:480px){.login-card{padding:25px 21px}}
+
+
+/* Historial técnico: fichas profesionales de intervención */
+.tech-record-card{background:#fff;border:1px solid #dce4ee;border-radius:14px;overflow:hidden;box-shadow:0 3px 12px rgba(15,35,60,.035);transition:border-color .18s,box-shadow .18s}
+.tech-record-card:hover{border-color:#b9cbdc;box-shadow:0 7px 20px rgba(15,35,60,.07)}
+.tech-record-top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:15px 20px;background:#f8fafc;border-bottom:1px solid #e7edf4}
+.tech-record-date{display:flex;flex-direction:column;gap:4px;min-width:150px}
+.tech-record-date span,.tech-section-label,.tech-notes>span{font-size:9px;letter-spacing:.8px;font-weight:800;color:#8291a5}
+.tech-record-date b{font-size:13px;color:#26384e}
+.tech-record-heading{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.tech-kind{font-size:12px;font-weight:800;color:#183b5c;background:#eaf2f9;border:1px solid #d9e6f1;padding:6px 10px;border-radius:6px}
+.tech-status{font-size:10px;font-weight:800;color:#64748b;background:#edf1f5;padding:6px 10px;border-radius:20px}
+.tech-status.is-good{background:#e8f6ef;color:#18764d}.tech-status.is-warn{background:#fff4df;color:#98600b}.tech-status.is-bad{background:#fdecec;color:#b42318}
+.tech-record-body{padding:18px 20px}
+.tech-description{padding:0 0 15px;border-bottom:1px solid #edf1f5}
+.tech-description p{margin:7px 0 0;color:#33465d;font-size:13px;line-height:1.65;white-space:pre-wrap}
+.tech-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 22px}
+.tech-field{padding:13px 0 10px;border-bottom:1px solid #f0f3f7;min-width:0}
+.tech-field span{display:block;font-size:10px;color:#8492a5;margin-bottom:5px}
+.tech-field b{display:block;font-size:12px;color:#293b50;font-weight:650;line-height:1.5;overflow-wrap:anywhere;white-space:pre-wrap}
+.tech-notes{margin-top:14px;padding:12px 14px;background:#f7f9fc;border-left:3px solid #7e9bb7;border-radius:4px}
+.tech-notes p{margin:5px 0 0;color:#526174;font-size:12px;line-height:1.6;white-space:pre-wrap}
+@media(max-width:800px){.tech-fields{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.tech-record-top{align-items:flex-start;flex-direction:column}.tech-fields{grid-template-columns:1fr}.tech-record-body{padding:15px}.tech-record-date{min-width:0}}
