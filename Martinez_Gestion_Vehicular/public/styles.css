@@ -1,80 +1,477 @@
-:root{--navy:#101c2d;--navy2:#182940;--ink:#182437;--muted:#718096;--line:#e5eaf0;--bg:#f3f6fa;--cyan:#d8f6f5;--teal:#0f9b8e;--green:#15966b;--amber:#d58a19;--red:#d64b4b;--shadow:0 8px 28px #1a2b4210}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}.sidebar{width:248px;background:var(--navy);color:#fff;position:fixed;inset:0 auto 0 0;padding:25px 16px;display:flex;flex-direction:column;z-index:5}.brand{display:flex;align-items:center;gap:12px;padding:0 8px 35px}.brand-mark{width:42px;height:42px;border-radius:12px;background:#d7f4f2;color:#123047;display:grid;place-items:center;font-weight:900;font-size:22px}.brand b{display:block;letter-spacing:2px;font-size:15px}.brand small{display:block;color:#91a2b8;font-size:9px;letter-spacing:1.8px;margin-top:4px}.side-label{font-size:9px;color:#7f91a8;letter-spacing:1.5px;padding:0 10px 12px}.nav{border:0;background:transparent;color:#aab8c9;text-align:left;padding:13px 12px;border-radius:9px;margin:2px 0;cursor:pointer;font:inherit;display:flex;gap:12px;align-items:center}.nav span{font-size:18px;width:20px;text-align:center}.nav:hover,.nav.active{background:#263b53;color:#fff}.nav.active{box-shadow:inset 3px 0 #55c5bb}.sidebar-bottom{margin-top:auto;border-top:1px solid #2a3c52;padding:18px 8px 0;color:#9eafc2;font-size:11px;display:flex;align-items:center;gap:8px}.sidebar-bottom small{margin-left:auto}.status-dot{width:7px;height:7px;border-radius:50%;background:#39c58d}.main{margin-left:248px;padding:0 34px 26px;max-width:1800px}.topbar{height:90px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);margin-bottom:25px}.eyebrow{font-size:9px;letter-spacing:1.7px;color:#8190a3;font-weight:800}.topbar h1{font-size:23px;margin:5px 0 0;letter-spacing:-.5px}.top-actions{display:flex;align-items:center;gap:12px}.today{font-size:12px;color:var(--muted);margin-right:8px}.avatar{border:0;border-radius:50%;width:36px;height:36px;background:#d9eeee;color:#176a68;font-weight:800}.btn{border:0;border-radius:8px;padding:10px 15px;font-weight:700;font-size:12px;cursor:pointer;transition:.15s}.btn:hover{transform:translateY(-1px);filter:brightness(.98)}.btn-primary{background:#147f7c;color:white}.btn-light{background:white;color:#44556a;border:1px solid var(--line)}.btn-white{background:white;color:#1c5960}.page{animation:fade .2s ease}@keyframes fade{from{opacity:.4;transform:translateY(4px)}to{opacity:1;transform:none}}.welcome{background:linear-gradient(115deg,#152b42,#205b65);color:white;border-radius:13px;padding:27px 30px;display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;box-shadow:var(--shadow)}.welcome h2{font-size:22px;margin:7px 0}.welcome p{color:#c4d5dc;margin:0}.light{color:#9dcac9}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}.stat{background:#fff;border:1px solid var(--line);border-radius:11px;padding:17px 18px;box-shadow:var(--shadow)}.stat-top{display:flex;justify-content:space-between;color:var(--muted);font-size:11px}.stat-icon{width:31px;height:31px;border-radius:9px;background:#e8f6f4;display:grid;place-items:center;color:#16877e;font-size:16px}.stat strong{display:block;font-size:27px;margin:10px 0 2px;letter-spacing:-1px}.stat small{color:var(--muted);font-size:10px}.dash-grid{display:grid;grid-template-columns:1.3fr .7fr;gap:16px;margin-bottom:17px}.panel{background:white;border:1px solid var(--line);border-radius:11px;box-shadow:var(--shadow);margin-bottom:17px;overflow:hidden}.panel-head{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid #edf0f4}.panel-head h3{font-size:14px;margin:0 0 4px}.panel-head p,.toolbar p{margin:0;color:var(--muted);font-size:11px}.tag{font-size:9px;letter-spacing:1px;color:#16877e;background:#e8f7f5;border-radius:20px;padding:6px 9px;font-weight:800}.alert-list{padding:4px 18px}.alert-item{display:flex;gap:11px;padding:13px 2px;border-bottom:1px solid #f0f2f5;align-items:flex-start}.alert-item:last-child{border:0}.alert-symbol{width:29px;height:29px;border-radius:8px;display:grid;place-items:center;flex-shrink:0;background:#fff2df;color:#b77919}.alert-symbol.red{background:#ffeded;color:#c63e3e}.alert-item b{font-size:11px;display:block}.alert-item small{font-size:10px;color:var(--muted);display:block;margin-top:3px}.fleet-status{padding:18px 20px}.fleet-row{display:flex;justify-content:space-between;font-size:11px;margin-bottom:8px}.bar{height:7px;border-radius:20px;background:#edf1f5;overflow:hidden;margin-bottom:16px}.bar span{display:block;height:100%;border-radius:20px;background:#27a88d}.table-wrap{overflow-x:auto}table{border-collapse:collapse;width:100%;white-space:nowrap}th{text-align:left;background:#f8fafc;color:#8491a2;font-size:9px;letter-spacing:.8px;padding:12px 15px;font-weight:800}td{padding:13px 15px;border-top:1px solid #eff2f5;font-size:11px;color:#405066}tbody tr:hover{background:#fbfcfd}.vehicle-name{font-weight:750;color:#24354a}.sub{display:block;color:#91a0b1;font-size:10px;margin-top:3px}.pill{display:inline-flex;padding:5px 8px;border-radius:30px;font-size:9px;font-weight:800}.pill.ok{background:#e6f6ee;color:#168256}.pill.warn{background:#fff4df;color:#a96c0d}.pill.bad{background:#ffebeb;color:#c23e3e}.pill.neutral{background:#eef1f5;color:#64748b}.toolbar{display:flex;justify-content:space-between;align-items:center;margin:8px 0 18px}.toolbar h2{font-size:19px;margin:0 0 5px}.filters{display:flex;gap:10px;margin-bottom:14px}.filters input{max-width:360px;flex:1}.filters input,.filters select,.field input,.field select,.field textarea{border:1px solid #dfe5ec;background:white;border-radius:7px;padding:10px 11px;font:inherit;font-size:11px;color:#314256;outline:none;width:100%}.filters input:focus,.field input:focus,.field select:focus,.field textarea:focus{border-color:#51aaa2;box-shadow:0 0 0 3px #51aaa21a}.link-btn{border:0;background:none;color:#16877e;font-size:11px;font-weight:800;cursor:pointer}.notice{background:#eaf5f5;border:1px solid #d4eae8;color:#376d6d;padding:12px 15px;border-radius:8px;font-size:11px;margin-bottom:14px}.action-btn{border:1px solid var(--line);background:white;border-radius:6px;padding:6px 9px;cursor:pointer;color:#617187}.action-btn:hover{background:#f1f6f7}.observation-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:13px}.obs-card{background:white;border:1px solid var(--line);border-radius:10px;padding:17px;box-shadow:var(--shadow)}.obs-card p{font-size:12px;line-height:1.5;color:#536276}.obs-meta{display:flex;justify-content:space-between;color:#8996a6;font-size:10px}.obs-actions{display:flex;gap:7px;align-items:center}.alert-strip{background:#fff1df;border:1px solid #f3d6a9;color:#875b18;padding:11px 15px;border-radius:8px;margin:-10px 0 18px;font-size:11px}.modal{position:fixed;inset:0;z-index:20;display:grid;place-items:center;padding:18px}.modal[hidden]{display:none}.modal-backdrop{position:absolute;inset:0;background:#0d1829a8;backdrop-filter:blur(3px)}.modal-card{position:relative;width:min(650px,100%);max-height:90vh;overflow:auto;background:white;border-radius:13px;box-shadow:0 25px 80px #0004}.modal-head{padding:20px 23px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between}.modal-head h2{margin:5px 0 0;font-size:19px}.close{border:0;background:#f1f4f7;border-radius:50%;width:30px;height:30px;font-size:20px;cursor:pointer}.form-grid{padding:20px 23px;display:grid;grid-template-columns:1fr 1fr;gap:13px}.field label{display:block;font-size:10px;font-weight:800;color:#536276;margin-bottom:6px}.field.full{grid-column:1/-1}.field textarea{min-height:75px;resize:vertical}.modal-actions{display:flex;justify-content:flex-end;gap:9px;padding:15px 23px;border-top:1px solid var(--line)}.toast{position:fixed;bottom:22px;right:24px;background:#14283d;color:white;padding:12px 17px;border-radius:8px;box-shadow:var(--shadow);font-size:12px;opacity:0;transform:translateY(10px);transition:.2s;pointer-events:none;z-index:30}.toast.show{opacity:1;transform:none}footer{text-align:center;color:#9aa5b3;font-size:10px;padding:12px}.empty{padding:28px;text-align:center;color:#8996a6;font-size:12px}.danger{color:#c43f3f}.alert-strip[hidden]{display:none}
-@media(max-width:1100px){.main{padding:0 20px 25px}.sidebar{width:220px}.main{margin-left:220px}.stats{grid-template-columns:repeat(2,1fr)}.dash-grid{grid-template-columns:1fr}}
-@media(max-width:720px){.sidebar{position:sticky;top:0;width:100%;height:auto;padding:10px;display:block}.brand{padding:0 7px 10px}.brand-mark{width:34px;height:34px}.side-label,.sidebar-bottom{display:none}.sidebar .nav{display:inline-flex;padding:8px;margin:2px;font-size:10px}.sidebar .nav span{display:none}.main{margin:0;padding:0 12px 20px}.topbar{height:auto;padding:17px 0;align-items:flex-start}.topbar h1{font-size:19px}.today{display:none}.top-actions{gap:6px}.top-actions .btn{font-size:10px;padding:8px}.welcome{padding:20px;display:block}.welcome .btn{margin-top:15px}.stats{gap:8px}.stat{padding:12px}.stat strong{font-size:23px}.observation-grid{grid-template-columns:1fr}.toolbar{align-items:flex-start;gap:10px}.toolbar .btn{white-space:nowrap;padding:9px}.form-grid{grid-template-columns:1fr}.field.full{grid-column:auto}.filters{flex-direction:column}.filters input{max-width:none}.topbar .eyebrow{font-size:8px}}
-/* Semáforo de kilometraje y revisión semanal */
-.pill.yellow{background:#fff7cc;color:#8a6900}.pill.orange{background:#ffead8;color:#b85a13}.oil-legend{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:0 0 15px}.oil-legend>div{background:#fff;border:1px solid var(--line);border-radius:9px;padding:12px;display:grid;grid-template-columns:12px 1fr;column-gap:8px;align-items:center}.oil-legend i{width:11px;height:11px;border-radius:3px;grid-row:span 2}.oil-legend i.green{background:#13a66b}.oil-legend i.yellow{background:#f2d000}.oil-legend i.orange{background:#f28a24}.oil-legend i.red{background:#e43c3c}.oil-legend b{font-size:11px}.oil-legend span{font-size:10px;color:var(--muted);margin-top:3px}.oil-legend>div:has(.green){border-left:4px solid #13a66b}.oil-legend>div:has(.yellow){border-left:4px solid #f2d000}.oil-legend>div:has(.orange){border-left:4px solid #f28a24}.oil-legend>div:has(.red){border-left:4px solid #e43c3c}
-@media(max-width:850px){.oil-legend{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:480px){.oil-legend{grid-template-columns:1fr}}
+let DB={vehicles:[],maintenances:[],documents:[],observations:[],weeklyReviews:[],oilCycles:[],settings:{alertDays:30,kmWarning:500}};
+const API_BASE=(window.API_BASE_URL||'').replace(/\/$/,'');
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const fmt=n=>Number(n||0).toLocaleString('es-PE');
+const money=n=>'S/ '+Number(n||0).toLocaleString('es-PE',{minimumFractionDigits:2,maximumFractionDigits:2});
+const today=()=>new Date().toISOString().slice(0,10);
+const dateFmt=s=>s?new Date(s+'T12:00:00').toLocaleDateString('es-PE'):'—';
+const vehicle=id=>DB.vehicles.find(v=>String(v.id)===String(id));
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const AUTH_KEY='martinez_session_token';
+const authToken=()=>sessionStorage.getItem(AUTH_KEY)||'';
+function showLogin(message='Ingresa tus credenciales para continuar.'){
+ const panel=document.getElementById('loginScreen'); if(panel) panel.hidden=false;
+ document.body.classList.add('auth-locked');
+ const msg=document.getElementById('loginMessage'); if(msg) msg.textContent=message;
+}
+function hideLogin(){const panel=document.getElementById('loginScreen');if(panel)panel.hidden=true;document.body.classList.remove('auth-locked');}
+function logout(){sessionStorage.removeItem(AUTH_KEY);DB={vehicles:[],maintenances:[],documents:[],observations:[],weeklyReviews:[],oilCycles:[],settings:{alertDays:30,kmWarning:500}};showLogin('La sesión se cerró correctamente.');}
+async function api(url,opts={}){const headers={'Content-Type':'application/json',...(opts.headers||{})};if(authToken())headers.Authorization=`Bearer ${authToken()}`;const r=await fetch(API_BASE+'/api'+url,{...opts,headers});let data={};try{data=await r.json()}catch{}if(r.status===401){sessionStorage.removeItem(AUTH_KEY);showLogin('Tu sesión venció. Vuelve a iniciar sesión.');}if(!r.ok)throw Error(data.error||'No se pudo completar la operación');return data}
+async function downloadAuthenticated(path,filename){const r=await fetch(API_BASE+path,{headers:{Authorization:`Bearer ${authToken()}`}});if(r.status===401){sessionStorage.removeItem(AUTH_KEY);showLogin('Tu sesión venció. Vuelve a iniciar sesión.');throw new Error('Sesión vencida');}if(!r.ok){let j={};try{j=await r.json()}catch{}throw new Error(j.error||'No se pudo descargar el archivo');}const blob=await r.blob();const url=URL.createObjectURL(blob);const link=document.createElement('a');link.href=url;link.download=filename;document.body.appendChild(link);link.click();link.remove();URL.revokeObjectURL(url)}
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600)}
+function kmState(rem){const c=DB.settings||{};const orange=Math.max(0,Number(c.orangeMinKm??100));const yellow=Math.max(orange,Number(c.yellowMinKm??500));const green=Math.max(yellow,Number(c.greenMinKm??1500));return rem<=orange?['Cambio urgente','bad']:rem<=yellow?['Pronto cambio','orange']:rem<=green?['En vigilancia','yellow']:['No urgente','ok']}
+function oilDaysLeft(v){const cycle=activeOilCycle(v);const baseDate=cycle?.startDate||v.oilLastDate;if(!baseDate)return null;const d=new Date(baseDate+'T12:00:00');d.setMonth(d.getMonth()+Number(v.oilIntervalMonths||6));return Math.ceil((new Date(d.toDateString())-new Date(new Date().toDateString()))/86400000)}
+function oilStatus(v){return kmState(oilRemain(v))}
+function docState(date){if(!date)return ['Sin vencimiento','neutral'];const days=Math.ceil((new Date(date+'T23:59:59')-new Date())/86400000);return days<0?['Vencido','bad']:days<=30?['Por vencer','warn']:['Vigente','ok']}
+function activeOilCycle(v){return (DB.oilCycles||[]).find(c=>String(c.vehicleId)===String(v.id)&&c.status==='En curso')}
+function oilRemain(v){const c=activeOilCycle(v);const limit=c?Number(c.plannedKm):Number(v.oilNextKm||Number(v.oilLastKm||0)+Number(v.oilInterval||DB.settings?.oilIntervalKm||5000));return limit-Number(v.currentKm||0)}
+function preventiveNextDate(v){if(!v.preventiveLastDate)return null;const d=new Date(v.preventiveLastDate+'T12:00:00');const n=Math.max(1,Number(v.preventiveIntervalValue||1));const u=v.preventiveIntervalUnit||'months';if(u==='days')d.setDate(d.getDate()+n);else if(u==='weeks')d.setDate(d.getDate()+7*n);else if(u==='years')d.setFullYear(d.getFullYear()+n);else d.setMonth(d.getMonth()+n);return d}
+function preventiveStatus(v){const d=preventiveNextDate(v);if(!d)return ['Sin programar','neutral'];const days=Math.ceil((d-new Date())/86400000);return days<0?['Vencido','bad']:days<=7?['Próximo','warn']:['Al día','ok']}
+function preventiveFrequency(v){return v.preventiveIntervalValue?`${v.preventiveIntervalValue} ${({days:'día(s)',weeks:'semana(s)',months:'mes(es)',years:'año(s)'})[v.preventiveIntervalUnit||'months']}`:'—'}
+function vehicleLabel(v){return `${v.name}${v.plate?' · '+v.plate:''}`}
+function showPage(name){if(name==='history'){if($('#historyVehicleDetail'))$('#historyVehicleDetail').hidden=true;if($('#historyVehiclesView'))$('#historyVehiclesView').hidden=false;}if(name==='documents'){if($('#documentVehicleDetail'))$('#documentVehicleDetail').hidden=true;if($('#documentsVehiclesView'))$('#documentsVehiclesView').hidden=false;}$$('.page').forEach(p=>p.hidden=p.id!==`page-${name}`);$$('.nav').forEach(n=>n.classList.toggle('active',n.dataset.page===name));const titles={dashboard:'Panel general',vehicles:'Vehículos',oil:'Cambios de aceite',weekly:'Revisión semanal',documents:'Documentos y SOAT',observations:'Observaciones',history:'Historial técnico',settings:'Configuración'};$('#pageTitle').textContent=titles[name]||name;render();window.scrollTo(0,0)}
+function go(name){showPage(name)}
+$$('.nav').forEach(b=>b.addEventListener('click',()=>go(b.dataset.page)));
+$$('[data-go]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.go)));
+$('#today').textContent=new Date().toLocaleDateString('es-PE',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+$('#year').textContent=new Date().getFullYear();
+$('#exportBtn').onclick=()=>downloadAuthenticated('/api/export','respaldo-martinez.json').then(()=>toast('Respaldo descargado')).catch(e=>toast(e.message));
+function allAlerts(){
+ const a=[];
+ DB.vehicles.filter(v=>v.active).forEach(v=>{const rem=oilRemain(v),days=oilDaysLeft(v),st=oilStatus(v);if(st[1]!=='ok')a.push({level:st[1],title:`Cambio de aceite: ${vehicleLabel(v)}`,desc:rem<=0?`Excedido por ${fmt(-rem)} km`:days!==null&&days<=0?`Intervalo de tiempo vencido hace ${fmt(-days)} días`:`Faltan ${fmt(rem)} km o ${days===null?'—':fmt(days)+' días'} para el servicio`});const pd=preventiveNextDate(v),ps=preventiveStatus(v);if(pd&&ps[1]!=='ok')a.push({level:ps[1]==='bad'?'bad':'warn',title:`Chequeo preventivo: ${vehicleLabel(v)}`,desc:`${ps[0]} · fecha programada ${pd.toLocaleDateString('es-PE')}`})});
+ DB.documents.forEach(d=>{const st=docState(d.expiryDate);if(st[1]!=='ok'&&st[1]!=='neutral')a.push({level:st[1],title:`${d.type}: ${vehicleLabel(vehicle(d.vehicleId)||{name:'Vehículo'})}`,desc:st[1]==='bad'?`Venció el ${dateFmt(d.expiryDate)}`:`Vence el ${dateFmt(d.expiryDate)}`})});
+ return a;
+}
 
-/* Historial técnico */
-.history-filters{grid-template-columns:minmax(220px,2fr) repeat(3,minmax(160px,1fr));}
-.history-audit{margin-top:22px;}
-@media(max-width:900px){.history-filters{grid-template-columns:1fr 1fr;}}
-@media(max-width:560px){.history-filters{grid-template-columns:1fr;}}
+let selectedObservationVehicle=null;
+function renderObservationVehicles(){
+ const cards=$('#observationVehicleCards');
+ if(cards) cards.innerHTML=DB.vehicles.filter(v=>v.active).map(v=>{
+   const list=(DB.observations||[]).filter(o=>String(o.vehicleId)===String(v.id));
+   const pending=list.filter(o=>(o.status||'Pendiente')!=='Resuelto').length;
+   const resolved=list.length-pending;
+   return `<article class="vehicle-card"><button class="vehicle-card-main" onclick="openObservationVehicle('${v.id}')"><span class="vehicle-card-icon">☷</span><span class="vehicle-card-state pill ${pending?'warn':'ok'}">${pending?'Pendientes':'Al día'}</span><h3>${esc(v.name)}</h3><p class="vehicle-plate">${esc(v.plate||'PLACA NO REGISTRADA')}</p><div class="vehicle-card-km"><small>OBSERVACIONES REGISTRADAS</small><strong>${list.length}</strong></div><div class="vehicle-card-footer"><span>${pending} pendientes · ${resolved} resueltas</span><b class="card-arrow">Ver observaciones ↗</b></div></button></article>`;
+ }).join('')||'<div class="panel empty">No hay vehículos activos registrados.</div>';
+ if(selectedObservationVehicle && $('#observationVehicleDetail') && !$('#observationVehicleDetail').hidden) openObservationVehicle(selectedObservationVehicle);
+}
+window.openObservationVehicle=function(id){
+ selectedObservationVehicle=id;
+ const v=vehicle(id); if(!v)return;
+ const list=(DB.observations||[]).filter(o=>String(o.vehicleId)===String(id)).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+ $('#observationsVehiclesView').hidden=true;
+ const d=$('#observationVehicleDetail'); d.hidden=false;
+ d.innerHTML=`<div class="record-detail-head"><div><span class="eyebrow">HISTORIAL DE OBSERVACIONES</span><h2>${esc(v.name)}</h2><p>${esc(v.plate||'Sin placa')} · ${list.length} observación(es)</p></div><div class="record-detail-actions"><button class="btn btn-primary" onclick="addVehicleObservation('${v.id}')">＋ Nueva observación</button><button class="btn btn-light" onclick="closeObservationVehicle()">← Volver a vehículos</button></div></div><div class="observation-detail-list">${list.length?list.map(o=>{const done=(o.status||'Pendiente')==='Resuelto';return `<article class="obs-card ${done?'obs-resolved':''}"><div class="obs-meta"><span>${dateFmt(o.date)}</span><span class="pill ${o.priority==='Alta'?'bad':o.priority==='Baja'?'neutral':'warn'}">Prioridad ${esc(o.priority||'Media')}</span></div><p>${esc(o.text)}</p><div class="obs-meta"><span class="pill ${done?'ok':'warn'}">${done?'Resuelto':'Pendiente'}</span><div class="obs-actions">${done?'<span class="resolved-label">Solucionado</span>':`<button class="btn btn-primary btn-resolve" onclick="setObservation('${o.id}','Resuelto')">✓ Marcar como resuelto</button>`}<button class="action-btn" onclick="editObservation('${o.id}')">Editar</button></div></div></article>`}).join(''):'<div class="panel empty">Este vehículo todavía no tiene observaciones. Puedes registrar la primera.</div>'}</div>`;
+};
+window.closeObservationVehicle=function(){ selectedObservationVehicle=null; $('#observationVehicleDetail').hidden=true; $('#observationsVehiclesView').hidden=false; };
+window.addVehicleObservation=function(id){openObservationModal(id);};
+function openObservationModal(vehicleId=null){
+ openModal('Nueva observación',[
+  {name:'vehicleId',label:'Vehículo',type:'select',options:vehicleOptions(),required:true,value:vehicleId||''},
+  {name:'date',label:'Fecha',type:'date',value:today(),required:true},
+  {name:'priority',label:'Prioridad',type:'select',value:'Media',options:['Baja','Media','Alta'].map(x=>({value:x,label:x}))},
+  {name:'text',label:'Observación / incidencia',type:'textarea',full:true,required:true}
+ ],d=>api('/observations',{method:'POST',body:JSON.stringify({...d,status:'Pendiente'})}));
+}
+function render(){
+ const active=DB.vehicles.filter(v=>v.active), alerts=allAlerts(), expired=alerts.filter(a=>a.level==='bad').length;
+ $('#alertStrip').hidden=!alerts.length;$('#alertStrip').textContent=alerts.length?`⚠ ${alerts.length} alerta(s): ${expired} vencida(s) y ${alerts.length-expired} próxima(s). Revisa el panel de alertas.`:'';
+ $('#stats').innerHTML=[
+  ['Vehículos activos',active.length,'Unidades registradas','▣'],
+  ['Alertas pendientes',alerts.length,`${expired} requieren atención inmediata`,'⚑'],
+  ['Aceite urgente o pronto',active.filter(v=>['bad','orange'].includes(oilStatus(v)[1])).length,'Rojo y naranja en el semáforo','◉'],
+  ['Documentos por vencer',DB.documents.filter(d=>docState(d.expiryDate)[1]!=='ok').length,'SOAT y otros documentos','▤']
+ ].map(x=>`<div class="stat"><div class="stat-top"><span>${x[0]}</span><span class="stat-icon">${x[3]}</span></div><strong>${fmt(x[1])}</strong><small>${x[2]}</small></div>`).join('');
+ $('#alertsList').innerHTML=alerts.length?alerts.slice(0,7).map(a=>`<div class="alert-item"><div class="alert-symbol ${a.level==='bad'?'red':''}">${a.level==='bad'?'!':'◷'}</div><div><b>${esc(a.title)}</b><small>${esc(a.desc)}</small></div></div>`).join(''):'<div class="empty">No hay alertas pendientes. La flota está al día.</div>';
+ const ok=active.filter(v=>oilRemain(v)>Number(DB.settings?.greenMinKm??1500)).length,soon=active.length-ok;
+ $('#fleetStatus').innerHTML=`<div class="fleet-row"><span>Dentro del rango de mantenimiento</span><b>${ok}</b></div><div class="bar"><span style="width:${active.length?ok/active.length*100:0}%"></span></div><div class="fleet-row"><span>Requieren seguimiento</span><b>${soon}</b></div><div class="bar"><span style="width:${active.length?soon/active.length*100:0}%;background:#dfa13e"></span></div><div class="fleet-row"><span>Documentos vigentes</span><b>${DB.documents.filter(d=>docState(d.expiryDate)[1]==='ok').length}</b></div>`;
+ const oil=[...active].sort((a,b)=>oilRemain(a)-oilRemain(b));
+ $('#dashboardOil').innerHTML=oil.slice(0,6).map(v=>{let r=oilRemain(v),s=oilStatus(v);return `<tr><td class="vehicle-name">${esc(v.name)}</td><td>${esc(v.plate||'—')}</td><td>${fmt(v.currentKm)}</td><td>${fmt(activeOilCycle(v)?.plannedKm??v.oilNextKm??(Number(v.oilLastKm||0)+Number(v.oilInterval||5000)))}</td><td>${fmt(r)} km</td><td><span class="pill ${s[1]}">${s[0]}</span></td></tr>`}).join('')||emptyRow(6);
+ const vehicleCards=$('#vehicleCards'); if(vehicleCards) vehicleCards.innerHTML=filteredVehicles().map(v=>{const st=oilStatus(v);return `<article class="vehicle-card ${v.active?'':'is-inactive'}"><button class="vehicle-card-main" onclick="openVehicleDetail('${v.id}')"><span class="vehicle-card-icon">▣</span><span class="vehicle-card-state pill ${v.active?'ok':'neutral'}">${v.active?'Activo':'Inactivo'}</span><h3>${esc(v.name)}</h3><p class="vehicle-plate">${esc(v.plate||'PLACA NO REGISTRADA')}</p><div class="vehicle-card-km"><small>KILOMETRAJE ACTUAL</small><strong>${fmt(v.currentKm)} <small>km</small></strong></div><div class="vehicle-card-footer"><span>ACEITE</span><b class="${st[1]}">${esc(st[0])}</b><span class="card-arrow">Ver vehículo ↗</span></div></button><div class="vehicle-card-actions"><button class="action-btn" onclick="editVehicle('${v.id}')">Editar</button><button class="action-btn" onclick="toggleVehicle('${v.id}')">${v.active?'Desactivar':'Activar'}</button><button class="action-btn danger" onclick="deleteVehicle('${v.id}')">Eliminar</button></div></article>`}).join('')||'<div class="panel empty">No hay vehículos que coincidan con la búsqueda.</div>';
+ $('#oilTable').innerHTML=oil.map(v=>{let r=oilRemain(v),s=oilStatus(v);const ls=lastOilService(v),cy=activeOilCycle(v);return `<tr><td class="vehicle-name">${esc(v.name)}<span class="sub">${esc(v.plate||'Sin placa')}</span></td><td>${dateFmt(ls?.date||cy?.startDate||v.oilLastDate)}<span class="sub">${fmt(ls?.km??cy?.startKm??v.oilLastKm)} km</span></td><td>${fmt(v.currentKm)} km</td><td>${fmt(cy?.plannedKm??v.oilNextKm??(Number(v.oilLastKm||0)+Number(v.oilInterval||5000)))} km</td><td>${fmt(r)} km</td><td><span class="pill ${s[1]}">${s[0]}</span></td><td><button class="action-btn" onclick="registerOil('${v.id}')">Registrar cambio</button> <button class="action-btn" onclick="configureOilVehicle('${v.id}')">Configurar</button></td></tr>`}).join('')||emptyRow(7);
+ const cycles=(DB.oilCycles||[]).slice().sort((a,b)=>String(b.startDate||'').localeCompare(String(a.startDate||''))||Number(b.number||0)-Number(a.number||0));
+ const cycleRows=$('#oilCyclesTable'); if(cycleRows) cycleRows.innerHTML=cycles.map(c=>{const v=vehicle(c.vehicleId)||{name:'Vehículo eliminado'};const period=`${dateFmt(c.startDate)} – ${c.endDate?dateFmt(c.endDate):'en curso'}`;const dist=c.distanceKm===null||c.distanceKm===undefined?Math.max(0,Number(v.currentKm||0)-Number(c.startKm||0)):c.distanceKm;return `<tr><td><b>#${String(c.number||1).padStart(3,'0')}</b></td><td class="vehicle-name">${esc(vehicleLabel(v))}<span class="sub">${period}</span></td><td>${fmt(c.startKm)} → ${fmt(c.plannedKm)} km</td><td>${fmt(dist)} km</td><td><span class="pill ${c.status==='Cerrado'?'ok':'warn'}">${esc(c.status)}</span></td></tr>`}).join('')||emptyRow(5);
+ const cfgBody=$('#oilVehicleSettings'); if(cfgBody) cfgBody.innerHTML=DB.vehicles.map(v=>`<tr><td class="vehicle-name">${esc(vehicleLabel(v))}</td><td>${fmt(v.currentKm)} km</td><td>${fmt(v.oilLastKm)} km</td><td>${fmt(v.oilInterval||DB.settings?.oilIntervalKm||5000)} km</td><td>${fmt(activeOilCycle(v)?.plannedKm??v.oilNextKm??(Number(v.oilLastKm||0)+Number(v.oilInterval||DB.settings?.oilIntervalKm||5000)))} km</td><td><button class="action-btn" onclick="configureOilVehicle('${v.id}')">Configurar</button></td></tr>`).join('')||emptyRow(6);
+ const sf=$('#oilSettingsForm'); if(sf&&!sf.dataset.loaded){const c=DB.settings||{};sf.elements.oilIntervalKm.value=c.oilIntervalKm??5000;sf.elements.greenMinKm.value=c.greenMinKm??1500;sf.elements.yellowMinKm.value=c.yellowMinKm??500;sf.elements.orangeMinKm.value=c.orangeMinKm??100;if(sf.elements.earlyOilChangeRestartsCycle)sf.elements.earlyOilChangeRestartsCycle.checked=!!c.earlyOilChangeRestartsCycle;sf.dataset.loaded='1';}
+ const rule=$('#oilRulesNotice'); if(rule){const c=DB.settings||{};rule.textContent=`Semáforo configurable: verde más de ${fmt(c.greenMinKm??1500)} km · amarillo ${fmt(c.yellowMinKm??500)}–${fmt(c.greenMinKm??1500)} km · naranja ${fmt(c.orangeMinKm??100)}–${fmt(c.yellowMinKm??500)} km · rojo ${fmt(c.orangeMinKm??100)} km o menos. El intervalo actual es ${fmt(c.oilIntervalKm??5000)} km.`;}
+ const c=DB.settings||{};const lg=$('#legendGreen');if(lg)lg.textContent=`Más de ${fmt(c.greenMinKm??1500)} km`;const ly=$('#legendYellow');if(ly)ly.textContent=`${fmt(c.yellowMinKm??500)}–${fmt(c.greenMinKm??1500)} km`;const lo=$('#legendOrange');if(lo)lo.textContent=`${fmt(c.orangeMinKm??100)}–${fmt(c.yellowMinKm??500)} km`;const lr=$('#legendRed');if(lr)lr.textContent=`${fmt(c.orangeMinKm??100)} km o menos`;
+ const dvc=$('#documentVehicleCards'); if(dvc) dvc.innerHTML=DB.vehicles.filter(v=>v.active).map(v=>{const docs=DB.documents.filter(d=>String(d.vehicleId)===String(v.id));const expired=docs.filter(d=>docState(d.expiryDate)[1]==='bad').length;const due=docs.filter(d=>docState(d.expiryDate)[1]==='warn').length;return `<article class="vehicle-card"><button class="vehicle-card-main" onclick="openDocumentVehicle('${v.id}')"><span class="vehicle-card-icon">▤</span><span class="vehicle-card-state pill ${expired?'bad':due?'warn':'ok'}">${expired?expired+' vencido(s)':due?due+' por vencer':'Documentos'}</span><h3>${esc(v.name)}</h3><p class="vehicle-plate">${esc(v.plate||'PLACA NO REGISTRADA')}</p><div class="vehicle-card-km"><small>DOCUMENTOS REGISTRADOS</small><strong>${docs.length}</strong></div><div class="vehicle-card-footer"><span>SOAT · REVISIÓN TÉCNICA · OTROS</span><b class="card-arrow">Ver documentos ↗</b></div></button></article>`}).join('')||'<div class="panel empty">No hay vehículos activos.</div>';
+ const schedule=$('#preventiveScheduleTable'); if(schedule) schedule.innerHTML=active.map(v=>{const next=preventiveNextDate(v),st=preventiveStatus(v);return `<tr><td class="vehicle-name">${esc(vehicleLabel(v))}</td><td>${dateFmt(v.preventiveLastDate)}</td><td>${esc(preventiveFrequency(v))}</td><td>${next?next.toLocaleDateString('es-PE'):'—'}</td><td><span class="pill ${st[1]}">${st[0]}</span></td><td><button class="action-btn" onclick="configurePreventive('${v.id}')">Configurar</button></td></tr>`}).join('')||emptyRow(6);
+ const wr=DB.weeklyReviews||[];const weekStart=new Date();weekStart.setDate(weekStart.getDate()-((weekStart.getDay()+6)%7));weekStart.setHours(0,0,0,0);const weekEnd=new Date(weekStart);weekEnd.setDate(weekEnd.getDate()+7);const thisWeek=wr.filter(x=>{const d=new Date(x.date+'T12:00:00');return d>=weekStart&&d<weekEnd});
+ $('#weeklyStats').innerHTML=[['Revisiones esta semana',thisWeek.length,'Inspecciones registradas'],['Conformes',thisWeek.filter(x=>x.result==='Conforme').length,'Sin observaciones'],['Requieren atención',thisWeek.filter(x=>x.result==='Requiere atención').length,'Revisar incidencias'],['Vehículos activos',active.length,'Unidades en flota']].map(x=>`<div class="stat"><div class="stat-top"><span>${x[0]}</span></div><strong>${fmt(x[1])}</strong><small>${x[2]}</small></div>`).join('');
+ $('#weeklyTable').innerHTML=wr.map(r=>`<tr><td>${dateFmt(r.date)}</td><td class="vehicle-name">${esc(vehicleLabel(vehicle(r.vehicleId)||{name:'Eliminado'}))}</td><td>${fmt(r.km)} km</td><td>${esc(r.tires)}</td><td>${esc(r.brakes)}</td><td>${esc(r.lights)}</td><td>${esc(r.fluids)}</td><td><span class="pill ${r.result==='Conforme'?'ok':r.result==='Requiere atención'?'bad':'warn'}">${esc(r.result)}</span></td><td><button class="action-btn" onclick="editWeekly('${r.id}')">Editar</button> <button class="action-btn danger" onclick="deleteWeekly('${r.id}')">Eliminar</button></td></tr>`).join('')||emptyRow(9);
+ renderObservationVehicles();
 
-.settings-form{padding:20px}.settings-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.settings-help{font-size:11px;color:#748297;margin:14px 0}.settings-actions{display:flex;justify-content:flex-end}.settings-actions .btn{min-width:190px}@media(max-width:760px){.settings-grid{grid-template-columns:1fr}.settings-form{padding:14px}}
+ const hq=($('#historySearch')?.value||'').toLowerCase();
+ const hk=$('#historyKind')?.value||'all', hs=$('#historyStatus')?.value||'all';
+ const hvc=$('#historyVehicleCards'); if(hvc) hvc.innerHTML=DB.vehicles.filter(v=>v.active&&(!hq||`${v.name} ${v.plate||''}`.toLowerCase().includes(hq))).map(v=>{const records=(DB.maintenances||[]).filter(m=>String(m.vehicleId)===String(v.id)&&(hk==='all'||(m.workKind||(String(m.type||'').toLowerCase()==='reparación'?'Reparación':'Mantenimiento'))===hk)&&(hs==='all'||(m.status||'Realizado')===hs));const weekly=(DB.weeklyReviews||[]).filter(r=>String(r.vehicleId)===String(v.id));const observations=(DB.observations||[]).filter(o=>String(o.vehicleId)===String(v.id));return `<article class="vehicle-card"><button class="vehicle-card-main" onclick="openHistoryVehicle('${v.id}')"><span class="vehicle-card-icon">▣</span><span class="vehicle-card-state pill ok">Activo</span><h3>${esc(v.name)}</h3><p class="vehicle-plate">${esc(v.plate||'PLACA NO REGISTRADA')}</p><div class="vehicle-card-km"><small>REGISTROS TÉCNICOS</small><strong>${records.length+weekly.length+observations.length}</strong></div><div class="vehicle-card-footer"><span>${records.length} intervenciones · ${weekly.length} revisiones</span><b class="card-arrow">Ver historial ↗</b></div></button></article>`}).join('')||'<div class="panel empty">No hay vehículos que coincidan con la búsqueda.</div>';
+ const ohv=$('#oilHistoryVehicle'); if(ohv){const old=ohv.value;ohv.innerHTML='<option value="all">Todos los vehículos</option>'+DB.vehicles.map(v=>`<option value="${esc(v.id)}">${esc(vehicleLabel(v))}</option>`).join('');ohv.value=[...ohv.options].some(o=>o.value===old)?old:'all';}
+ const osv=$('#oilHistoryVehicle')?.value||'all';
+ const osb=$('#oilServicesTable'); if(osb) osb.innerHTML=(DB.maintenances||[]).filter(m=>/aceite/i.test(m.type||'')&&(osv==='all'||String(m.vehicleId)===osv)).sort((x,y)=>String(y.date||'').localeCompare(String(x.date||''))||String(y.createdAt||'').localeCompare(String(x.createdAt||''))).map(m=>{const v=vehicle(m.vehicleId)||{name:'Vehículo eliminado'};const st=m.status||'Realizado';return `<tr><td>${dateFmt(m.date)}</td><td class="vehicle-name">${esc(vehicleLabel(v))}</td><td>${fmt(m.km)} km</td><td><span class="pill ${st==='Realizado'?'ok':st==='Anulado'?'neutral':'warn'}">${esc(st)}</span></td></tr>`}).join('')||emptyRow(4);
+ const vehicleFilter=$('#historyVehicle'); if(vehicleFilter){const old=vehicleFilter.value;vehicleFilter.innerHTML='<option value="all">Todos los vehículos</option>'+DB.vehicles.map(v=>`<option value="${esc(v.id)}">${esc(vehicleLabel(v))}</option>`).join('');vehicleFilter.value=[...vehicleFilter.options].some(o=>o.value===old)?old:'all';}
+}
+function timelineItems(vid){
+ const ok=x=>vid==='all'||String(x.vehicleId)===String(vid);const name=id=>vehicleLabel(vehicle(id)||{name:'Vehículo eliminado'});const items=[];
+ (DB.maintenances||[]).filter(ok).forEach(m=>{const oil=/aceite/i.test(m.type||'');items.push({date:m.date,sort:m.createdAt||'',vehicle:name(m.vehicleId),src:oil?'Cambio de aceite':(m.workKind||'Mantenimiento'),tone:oil?'orange':'ok',detail:`${m.type||''}${m.description?' · '+m.description:''}${m.provider?' · '+m.provider:''}${m.oilCycleAction?' · '+m.oilCycleAction:''}`,km:m.km,status:m.status||'Realizado'})});
+ (DB.weeklyReviews||[]).filter(ok).forEach(r=>items.push({date:r.date,sort:r.createdAt||'',vehicle:name(r.vehicleId),src:'Revisión semanal',tone:r.result==='Conforme'?'ok':r.result==='Requiere atención'?'bad':'warn',detail:`Resultado: ${r.result||'—'}${r.notes?' · '+r.notes:''}`,km:r.km,status:r.result}));
+ (DB.observations||[]).filter(ok).forEach(o=>items.push({date:o.date,sort:o.createdAt||'',vehicle:name(o.vehicleId),src:'Observación',tone:o.priority==='Alta'?'bad':'warn',detail:`${o.priority||''} · ${o.text||''}`,km:null,status:o.status}));
+ (DB.documents||[]).filter(ok).forEach(d=>items.push({date:d.issueDate||(d.createdAt||'').slice(0,10),sort:d.createdAt||'',vehicle:name(d.vehicleId),src:'Documento',tone:'neutral',detail:`${d.type||''}${d.number?' '+d.number:''} · vence ${dateFmt(d.expiryDate)}`,km:null,status:''}));
+ (DB.maintenanceAudit||[]).filter(a=>ok(a)&&(a.area==='Vehículo'||a.action==='CONFIGURACIÓN ACEITE')).forEach(a=>items.push({date:(a.at||'').slice(0,10),sort:a.at||'',vehicle:a.vehicleName||'—',src:a.area==='Vehículo'?'Vehículo':'Config. aceite',tone:'neutral',detail:`${a.action}: ${a.detail||''}`,km:null,status:''}));
+ return items.sort((x,y)=>String(y.date||'').localeCompare(String(x.date||''))||String(y.sort).localeCompare(String(x.sort)));
+}
+function lastOilService(v){return (DB.maintenances||[]).filter(m=>String(m.vehicleId)===String(v.id)&&/aceite/i.test(m.type||'')&&(m.status||'Realizado')!=='Anulado').sort((x,y)=>String(y.date||'').localeCompare(String(x.date||''))||Number(y.km||0)-Number(x.km||0))[0]}
+async function submitOil(v,d){
+ const c=activeOilCycle(v);
+ if(c){const km=Number(d.km),planned=Number(c.plannedKm),interval=Number(c.intervalKm)||Number(v.oilInterval)||5000,flag=!!DB.settings?.earlyOilChangeRestartsCycle;
+  const msg=km<planned&&!flag
+   ?`CAMBIO ANTICIPADO a ${fmt(km)} km.\n\nEl ciclo actual (${fmt(c.startKm)} → ${fmt(planned)} km) NO se reinicia: el próximo cambio sigue en ${fmt(planned)} km.\nEl cambio queda guardado en el historial de aceite.\n\n¿Registrar?`
+   :km<planned
+   ?`CAMBIO ANTICIPADO a ${fmt(km)} km.\n\nSegún tu configuración, este cambio REINICIA el contador: el próximo cambio será a ${fmt(km+interval)} km.\n\n¿Registrar?`
+   :`Este cambio (${fmt(km)} km) alcanza o supera el límite de ${fmt(planned)} km.\n\nSe cerrará el ciclo actual y el próximo cambio será a ${fmt(km+interval)} km.\n\n¿Registrar?`;
+  if(!confirm(msg))throw Error('Registro cancelado');}
+ const nextKm=Number(c?.plannedKm??v.oilNextKm??(Number(v.oilLastKm||0)+(Number(v.oilInterval)||5000)));
+ return api('/maintenances',{method:'POST',body:JSON.stringify({...d,type:'Cambio de aceite',workKind:'Mantenimiento',nextKm})});
+}
+window.openVehicleDetail=id=>{const v=vehicle(id);if(!v)return;const detail=$('#vehicleDetail');const records=(DB.maintenances||[]).filter(m=>String(m.vehicleId)===String(id)&&/aceite/i.test(m.type||'')).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));const st=oilStatus(v),cy=activeOilCycle(v);detail.innerHTML=`<div class="vehicle-detail-head"><div><span class="eyebrow">FICHA DE UNIDAD</span><h2>${esc(v.name)}</h2><p>${esc(v.plate||'Sin placa registrada')} · ${fmt(v.currentKm)} km actuales</p></div><div class="vehicle-detail-actions"><button class="btn btn-light" onclick="registerOil('${v.id}')">＋ Registrar revisión de aceite</button><button class="btn btn-light" onclick="closeVehicleDetail()">Cerrar ✕</button></div></div><div class="vehicle-detail-stats"><div><small>ESTADO DE ACEITE</small><b class="${st[1]}">${esc(st[0])}</b></div><div><small>PRÓXIMO CAMBIO</small><b>${fmt(cy?.plannedKm??v.oilNextKm??(Number(v.oilLastKm||0)+Number(v.oilInterval||DB.settings?.oilIntervalKm||5000)))} km</b></div><div><small>KILÓMETROS RESTANTES</small><b>${fmt(oilRemain(v))} km</b></div><div><small>REGISTROS</small><b>${records.length}</b></div></div><div class="vehicle-detail-history"><div class="panel-head"><div><h3>Historial de cambios de aceite</h3><p>Revisiones y servicios registrados para esta unidad.</p></div></div>${records.length?`<div class="oil-timeline">${records.map(m=>`<div class="oil-timeline-item"><span class="timeline-dot"></span><div><b>${dateFmt(m.date)}</b><p>${fmt(m.km)} km</p><small>${esc(m.status||'Realizado')} · ${esc(m.oilCycleAction||'Registro de aceite')}</small></div></div>`).join('')}</div>`:'<div class="empty">Todavía no hay cambios de aceite registrados para este vehículo.</div>'}</div>`;detail.hidden=false;detail.scrollIntoView({behavior:'smooth',block:'start'});};
+window.closeVehicleDetail=()=>{const d=$('#vehicleDetail');if(d)d.hidden=true;};
 
-/* Tarjetas futuristas de vehículos */
-.vehicle-card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(245px,1fr));gap:16px;margin:8px 0 20px}
-.vehicle-card{position:relative;overflow:hidden;background:linear-gradient(145deg,#14283d 0%,#1b3a50 58%,#17535a 100%);border:1px solid #31566a;border-radius:15px;box-shadow:0 12px 28px #10263b18;transition:transform .2s,box-shadow .2s;color:#f5fbff}
-.vehicle-card:before{content:"";position:absolute;width:170px;height:170px;border:1px solid #8ce4dc22;border-radius:50%;right:-75px;top:-90px;box-shadow:0 0 0 18px #8ce4dc0b,0 0 0 38px #8ce4dc08;pointer-events:none}
-.vehicle-card:hover{transform:translateY(-4px);box-shadow:0 18px 34px #10263b30}
-.vehicle-card-main{position:relative;display:block;width:100%;min-height:215px;padding:20px 20px 14px;text-align:left;color:inherit;background:transparent;border:0;cursor:pointer}
-.vehicle-card-icon{display:grid;place-items:center;width:38px;height:38px;border:1px solid #80d8d044;border-radius:11px;background:#8ce4dc12;color:#9ce8df;font-size:19px}
-.vehicle-card-state{position:absolute;right:17px;top:22px}
-.vehicle-card h3{font-size:18px;letter-spacing:-.3px;margin:17px 0 4px;color:#fff}
-.vehicle-plate{font-size:10px;letter-spacing:1.5px;color:#9fb9c8;margin:0 0 18px;font-weight:800}
-.vehicle-card-km{border-top:1px solid #ffffff19;padding-top:12px;display:flex;align-items:flex-end;justify-content:space-between}
-.vehicle-card-km>small{font-size:9px;letter-spacing:1px;color:#9fb9c8;font-weight:800}
-.vehicle-card-km strong{font-size:20px;color:#fff}.vehicle-card-km strong small{font-size:10px;color:#a9c3cf}
-.vehicle-card-footer{display:flex;align-items:center;gap:8px;margin-top:13px;padding-top:11px;border-top:1px solid #ffffff19;font-size:9px;letter-spacing:.7px;color:#9fb9c8}
-.vehicle-card-footer b{font-size:10px;letter-spacing:0}.vehicle-card-footer b.ok{color:#67e0ae}.vehicle-card-footer b.yellow{color:#f6dc72}.vehicle-card-footer b.orange{color:#ffb477}.vehicle-card-footer b.bad{color:#ff8585}.card-arrow{margin-left:auto;color:#b6d8dc;font-weight:800}
-.vehicle-card-actions{position:relative;display:flex;gap:7px;padding:10px 16px;background:#0e2032a8;border-top:1px solid #ffffff15}.vehicle-card-actions .action-btn{font-size:10px;padding:6px 8px;background:#ffffff12;border-color:#ffffff20;color:#d9e9ef}.vehicle-card-actions .action-btn.danger{color:#ffaaaa}
-.vehicle-card.is-inactive{filter:saturate(.45);opacity:.8}
-.vehicle-detail{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);margin:18px 0 24px;overflow:hidden;scroll-margin-top:15px}
-.vehicle-detail[hidden]{display:none}
-.vehicle-detail-head{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:22px 24px;background:linear-gradient(110deg,#14283d,#205b65);color:white}
-.vehicle-detail-head .eyebrow{color:#9dcac9}.vehicle-detail-head h2{font-size:21px;margin:6px 0}.vehicle-detail-head p{margin:0;color:#c2d5dc;font-size:11px}.vehicle-detail-actions{display:flex;gap:8px;flex-wrap:wrap}.vehicle-detail-actions .btn{font-size:10px}
-.vehicle-detail-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-bottom:1px solid var(--line)}
-.vehicle-detail-stats>div{padding:17px 20px;border-right:1px solid var(--line)}.vehicle-detail-stats>div:last-child{border:0}.vehicle-detail-stats small{display:block;color:#8a98a9;font-size:9px;letter-spacing:.7px;font-weight:800;margin-bottom:7px}.vehicle-detail-stats b{font-size:15px;color:#263b53}.vehicle-detail-stats b.ok{color:#168256}.vehicle-detail-stats b.yellow{color:#a18400}.vehicle-detail-stats b.orange{color:#b85a13}.vehicle-detail-stats b.bad{color:#c23e3e}
-.vehicle-detail-history .panel-head{padding:17px 21px}.oil-timeline{padding:10px 24px 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px}.oil-timeline-item{display:flex;gap:10px;padding:13px;border:1px solid #e8edf2;border-radius:10px;background:#fbfcfe}.timeline-dot{width:9px;height:9px;flex:0 0 9px;margin-top:4px;border-radius:50%;background:#28a99a;box-shadow:0 0 0 4px #28a99a18}.oil-timeline-item b{font-size:11px;color:#293e55}.oil-timeline-item p{font-size:13px;font-weight:800;margin:5px 0;color:#1d5360}.oil-timeline-item small{font-size:9px;color:#8491a2}
-@media(max-width:760px){.vehicle-detail-head{align-items:flex-start;flex-direction:column}.vehicle-detail-stats{grid-template-columns:repeat(2,1fr)}.vehicle-detail-stats>div:nth-child(2){border-right:0}.vehicle-detail-stats>div:nth-child(-n+2){border-bottom:1px solid var(--line)}.vehicle-card-grid{grid-template-columns:1fr 1fr;gap:10px}.vehicle-card-main{padding:15px;min-height:205px}.vehicle-card h3{font-size:15px}.vehicle-card-km strong{font-size:17px}.vehicle-card-actions{padding:8px;gap:4px}.vehicle-card-actions .action-btn{padding:5px 6px;font-size:9px}}
-@media(max-width:480px){.vehicle-card-grid{grid-template-columns:1fr}.vehicle-card-main{min-height:190px}.vehicle-detail-actions{width:100%}.vehicle-detail-actions .btn{flex:1}}
+function openHistoryVehicle(id){
+ const v=vehicle(id);if(!v)return;
+ const records=(DB.maintenances||[]).filter(m=>String(m.vehicleId)===String(id)&&(m.status||'Realizado')!=='Anulado').map(m=>({date:m.date,kind:/aceite/i.test(m.type||'')?'Cambio de aceite':(m.type||m.workKind||'Mantenimiento'),detail:[m.description,m.parts&&'Repuestos: '+m.parts,m.provider&&'Taller: '+m.provider].filter(Boolean).join(' · '),km:m.km,status:m.status||'Realizado'}));
+ (DB.weeklyReviews||[]).filter(r=>String(r.vehicleId)===String(id)).forEach(r=>records.push({date:r.date,kind:'Revisión semanal',detail:`Resultado: ${r.result||'—'}${r.notes?' · '+r.notes:''}`,km:r.km,status:r.result||'Registrada'}));
+ (DB.observations||[]).filter(o=>String(o.vehicleId)===String(id)).forEach(o=>records.push({date:o.date,kind:'Observación / incidencia',detail:o.text||'Sin detalle',km:null,status:o.status||o.priority||'Registrada'}));
+ records.sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+ $('#historyVehiclesView').hidden=true;const d=$('#historyVehicleDetail');d.hidden=false;
+ d.innerHTML=`<div class="record-detail-head"><div><span class="eyebrow">HISTORIAL TÉCNICO</span><h2>${esc(v.name)}</h2><p>${esc(v.plate||'Sin placa')} · ${fmt(v.currentKm)} km actuales</p></div><button class="btn btn-light" onclick="closeHistoryVehicle()">← Volver a vehículos</button></div><div class="record-summary"><div><small>MANTENIMIENTOS</small><b>${records.filter(x=>x.kind!=='Revisión semanal'&&x.kind!=='Observación / incidencia').length}</b></div><div><small>REVISIONES Y OBSERVACIONES</small><b>${records.filter(x=>x.kind==='Revisión semanal'||x.kind==='Observación / incidencia').length}</b></div><div><small>ÚLTIMO REGISTRO</small><b>${records[0]?dateFmt(records[0].date):'—'}</b></div></div><div class="record-list">${records.length?records.map(r=>`<article class="record-item"><div class="record-item-date">${dateFmt(r.date)}</div><div><b>${esc(r.kind)}</b><p>${esc(r.detail||'Sin detalle adicional')}</p><small>${r.km!=null?fmt(r.km)+' km · ':''}${esc(r.status)}</small></div></article>`).join(''):'<div class="empty">Todavía no hay mantenimientos ni revisiones registrados para este vehículo.</div>'}</div>`;
+ window.scrollTo(0,0);
+}
+window.closeHistoryVehicle=()=>{$('#historyVehicleDetail').hidden=true;$('#historyVehiclesView').hidden=false;window.scrollTo(0,0)};
+window.openDocumentVehicle=id=>{const v=vehicle(id);if(!v)return;const docs=DB.documents.filter(x=>String(x.vehicleId)===String(id)).sort((a,b)=>String(a.expiryDate||'').localeCompare(String(b.expiryDate||'')));$('#documentsVehiclesView').hidden=true;const d=$('#documentVehicleDetail');d.hidden=false;d.innerHTML=`<div class="record-detail-head"><div><span class="eyebrow">DOCUMENTOS DEL VEHÍCULO</span><h2>${esc(v.name)}</h2><p>${esc(v.plate||'Sin placa registrada')}</p></div><div><button class="btn btn-primary" onclick="registerDocumentForVehicle('${v.id}')">＋ Registrar documento</button> <button class="btn btn-light" onclick="closeDocumentVehicle()">← Volver a vehículos</button></div></div><div class="record-list">${docs.length?docs.map(x=>{const st=docState(x.expiryDate);return `<article class="document-item"><div><span class="pill ${st[1]}">${st[0]}</span><h3>${esc(x.type)}</h3><p>${esc(x.number||'Sin número / referencia')}</p><small>Emisión: ${dateFmt(x.issueDate)} · ${x.expiryDate?'Vencimiento: '+dateFmt(x.expiryDate):'Documento sin vencimiento'}</small>${x.insurer?`<p>Aseguradora: ${esc(x.insurer)}</p>`:''}${x.inspectionCenter?`<p>Centro de inspección: ${esc(x.inspectionCenter)}</p>`:''}${[['Titular',x.ownerName],['Oficina registral',x.registryOffice],['Partida registral',x.registryRecord],['Placa',x.plate],['Placa anterior',x.previousPlate],['VIN',x.vin],['Chasis / serie',x.chassis],['Motor',x.engine],['Marca',x.brand],['Modelo / versión',x.model],['Año',x.year],['Combustible',x.fuel],['Categoría',x.category],['Carrocería',x.body],['Color',x.color],['Asientos',x.seats],['Pasajeros',x.passengers],['Condición',x.condition],['Entidad emisora',x.issuer],['Entidad certificadora',x.certifyingEntity],['Chip / control de carga',x.chipCode||x.controlDevice],['Cilindro / tanque',x.cylinderSerial||x.tankSerial],['Sistema de gas',x.gasSystem],['Taller de conversión',x.conversionWorkshop],['Resultado',x.result],['Modalidad',x.authorizationType],['Ámbito / ruta',x.operationArea],['Cobertura',x.coverage],['Deducible',x.deductible]].filter(p=>p[1]!==undefined&&p[1]!==null&&p[1]!=='').map(p=>`<p>${p[0]}: ${esc(p[1])}</p>`).join('')}${x.notes?`<p>${esc(x.notes)}</p>`:''}</div><div><button class="action-btn" onclick="editDocument('${x.id}')">Editar</button> <button class="action-btn danger" onclick="deleteItem('documents','${x.id}')">Eliminar</button></div></article>`}).join(''):'<div class="empty">Este vehículo todavía no tiene documentos registrados.</div>'}</div>`;window.scrollTo(0,0)};
+window.closeDocumentVehicle=()=>{$('#documentVehicleDetail').hidden=true;$('#documentsVehiclesView').hidden=false;window.scrollTo(0,0)};
+window.registerDocumentForVehicle=id=>openDocumentModal(null,id);
+function emptyRow(n){return `<tr><td colspan="${n}" class="empty">No hay registros para mostrar.</td></tr>`}
+function filteredVehicles(){let q=$('#vehicleSearch')?.value.toLowerCase()||'',f=$('#vehicleFilter')?.value||'all';return DB.vehicles.filter(v=>(f==='all'||(f==='active'?v.active:!v.active))&&`${v.name} ${v.plate}`.toLowerCase().includes(q))}
+['vehicleSearch','vehicleFilter','historySearch','historyVehicle','historyKind','historyStatus','oilHistoryVehicle'].forEach(id=>$('#'+id)?.addEventListener('input',render));
+function fields(items){return items.map(f=>`<div class="field ${f.full?'full':''}"><label>${f.label}${f.required?' *':''}</label>${f.type==='select'?`<select name="${f.name}" ${f.required?'required':''}>${f.options.map(o=>`<option value="${esc(o.value)}" ${String(o.value)===String(f.value)?'selected':''}>${esc(o.label)}</option>`).join('')}</select>`:f.type==='textarea'?`<textarea name="${f.name}" placeholder="${esc(f.placeholder||'')}">${esc(f.value??'')}</textarea>`:`<input name="${f.name}" type="${f.type||'text'}" value="${esc(f.value??'')}" placeholder="${esc(f.placeholder||'')}" ${f.required?'required':''} ${f.min!==undefined?`min="${f.min}"`:''} ${f.step?`step="${f.step}"`:''}>`}</div>`).join('')}
+function vehicleOptions(){return DB.vehicles.map(v=>({value:v.id,label:vehicleLabel(v)}))}
+function openModal(title,formFields,submit){$('#modalTitle').textContent=title;$('#modalFields').innerHTML=fields(formFields);$('#modal').hidden=false;$('#modalForm').onsubmit=async e=>{e.preventDefault();let data=Object.fromEntries(new FormData(e.target).entries());try{await submit(data);$('#modal').hidden=true;e.target.reset();await refresh();toast('Registro guardado correctamente')}catch(err){toast(err.message)}}}
+function closeModal(){$('#modal').hidden=true}
+$$('[data-close]').forEach(x=>x.addEventListener('click',closeModal));
+$('#addVehicle').onclick=()=>openModal('Registrar vehículo',[
+ {name:'name',label:'Nombre del vehículo',required:true},{name:'plate',label:'Placa'},
+ {name:'currentKm',label:'Kilometraje actual',type:'number',min:0,required:true},
+ {name:'oilLastKm',label:'Último cambio de aceite (km)',type:'number',min:0,value:0},
+ {name:'oilLastDate',label:'Fecha del último cambio de aceite',type:'date'},
+ {name:'oilInterval',label:'Intervalo de aceite (km)',type:'number',min:1,value:DB.settings?.oilIntervalKm||5000},
+ {name:'notes',label:'Notas generales',type:'textarea',full:true}
+],d=>api('/vehicles',{method:'POST',body:JSON.stringify(d)}));
+window.editVehicle=id=>{let v=vehicle(id);openModal('Actualizar datos del vehículo',[
+ {name:'name',label:'Nombre',value:v.name,required:true},{name:'plate',label:'Placa',value:v.plate},
+ {name:'currentKm',label:'Kilometraje actual',type:'number',value:v.currentKm,min:0},
+ {name:'notes',label:'Notas generales',type:'textarea',value:v.notes,full:true}
+],d=>api('/vehicles/'+id,{method:'PUT',body:JSON.stringify({...d,active:v.active})}))};
+window.configurePreventive=id=>{const v=vehicle(id);openModal('Programar chequeo preventivo · '+v.name,[
+ {name:'preventiveLastDate',label:'Fecha de última revisión',type:'date',value:v.preventiveLastDate||today(),required:true},
+ {name:'preventiveIntervalValue',label:'Frecuencia cada',type:'number',min:1,value:v.preventiveIntervalValue||1,required:true},
+ {name:'preventiveIntervalUnit',label:'Unidad de tiempo',type:'select',value:v.preventiveIntervalUnit||'months',options:[['days','Días'],['weeks','Semanas'],['months','Meses'],['years','Años']].map(([value,label])=>({value,label}))}
+],d=>api('/vehicles/'+id,{method:'PUT',body:JSON.stringify({...v,...d})}))};
+$('#configurePreventive')?.addEventListener('click',()=>{const active=DB.vehicles.filter(v=>v.active);if(!active.length)return toast('Primero registra un vehículo');openModal('Configurar chequeo preventivo',[{name:'vehicleId',label:'Vehículo',type:'select',options:vehicleOptions(),required:true},{name:'preventiveLastDate',label:'Fecha de última revisión',type:'date',value:today(),required:true},{name:'preventiveIntervalValue',label:'Frecuencia cada',type:'number',min:1,value:1,required:true},{name:'preventiveIntervalUnit',label:'Unidad de tiempo',type:'select',value:'months',options:[['days','Días'],['weeks','Semanas'],['months','Meses'],['years','Años']].map(([value,label])=>({value,label}))}],async d=>{const v=vehicle(d.vehicleId);await api('/vehicles/'+v.id,{method:'PUT',body:JSON.stringify({...v,preventiveLastDate:d.preventiveLastDate,preventiveIntervalValue:d.preventiveIntervalValue,preventiveIntervalUnit:d.preventiveIntervalUnit})})})});
+window.deleteVehicle=async id=>{const v=vehicle(id);if(!confirm(`¿Eliminar definitivamente ${v.name} y sus registros asociados?`))return;await api('/vehicles/'+id,{method:'DELETE'});await refresh();toast('Vehículo y registros asociados eliminados')};
+window.toggleVehicle=async id=>{let v=vehicle(id);if(!confirm(`${v.active?'¿Desactivar':'¿Activar'} ${v.name}?`))return;await api('/vehicles/'+id,{method:'PUT',body:JSON.stringify({...v,active:!v.active})});await refresh();toast('Estado actualizado')};
+window.registerOil=id=>{const v=vehicle(id);if(!v)return toast('Selecciona un vehículo registrado');openModal('Registrar revisión de aceite · '+v.name,[{name:'vehicleId',label:'Vehículo',type:'select',value:v.id,options:DB.vehicles.map(x=>({value:x.id,label:vehicleLabel(x)})),required:true},{name:'date',label:'Fecha que se revisó',type:'date',value:today(),required:true},{name:'km',label:'Kilometraje actual',type:'number',min:0,value:v.currentKm,required:true}],d=>{const selected=vehicle(d.vehicleId);if(!selected)throw Error('No se encontró el vehículo seleccionado');return submitOil(selected,{vehicleId:selected.id,date:d.date,km:d.km})})};
+$('#quickOilBtn')?.addEventListener('click',()=>{const active=DB.vehicles.filter(v=>v.active);if(!active.length)return toast('Primero registra un vehículo en el módulo Vehículos');openModal('Registrar revisión de aceite',[{name:'vehicleId',label:'Vehículo',type:'select',options:active.map(v=>({value:v.id,label:vehicleLabel(v)})),required:true},{name:'date',label:'Fecha que se revisó',type:'date',value:today(),required:true},{name:'km',label:'Kilometraje actual',type:'number',min:0,required:true}],d=>{const v=vehicle(d.vehicleId);if(!v)throw Error('No se encontró el vehículo seleccionado');return submitOil(v,{vehicleId:v.id,date:d.date,km:d.km})})});
+$('#oilReportBtn')?.addEventListener('click',()=>downloadAuthenticated('/api/export/excel','reporte-gestion-vehicular.xlsx').then(()=>toast('Reporte Excel descargado')).catch(e=>toast(e.message)));
+$('#addHistory').onclick=()=>openModal('Registrar mantenimiento',[
+ {name:'vehicleId',label:'Vehículo',type:'select',options:vehicleOptions(),required:true},
+ {name:'type',label:'Tipo de servicio',type:'select',required:true,options:['Preventivo','Correctivo','Reparación','Neumáticos','Otro'].map(x=>({value:x,label:x}))},
+ {name:'date',label:'Fecha del servicio',type:'date',value:today(),required:true},
+ {name:'km',label:'Kilometraje al servicio',type:'number',min:0,required:true},
+ {name:'workKind',label:'Clase de intervención',type:'select',options:['Mantenimiento','Reparación'].map(x=>({value:x,label:x}))},
+ {name:'driverName',label:'Nombre del chofer'},
+ {name:'provider',label:'Taller / proveedor'},
+ {name:'technician',label:'Mecánico / técnico responsable'},
+ {name:'laborCost',label:'Costo de mano de obra (S/)',type:'number',min:0,step:'0.01'},
+ {name:'partsCost',label:'Costo de repuestos (S/)',type:'number',min:0,step:'0.01'},
+ {name:'cost',label:'Costo total (S/)',type:'number',min:0,step:'0.01'},
+ {name:'parts',label:'Repuestos utilizados'},
+ {name:'status',label:'Estado',type:'select',options:['Realizado','Pendiente'].map(x=>({value:x,label:x}))},
+ {name:'description',label:'Detalle y observaciones',type:'textarea',full:true}
+],d=>api('/maintenances',{method:'POST',body:JSON.stringify(d)}));
+$('#dashAddMaintenance')?.addEventListener('click',()=>{go('history');$('#addHistory').click()});
+window.annulHistory=async id=>{if(!confirm('¿Anular esta intervención? El registro permanecerá en el historial.'))return;await api('/maintenances/'+id,{method:'DELETE'});await refresh();toast('Intervención anulada; se conservó en el historial')};
+$('#addDocument').onclick=()=>openDocumentModal();
+const DOCUMENT_TYPES=[
+ 'SOAT','CAT','Ficha técnica','Revisión técnica','Seguro vehicular',
+ 'Tarjeta de propiedad','Permiso de circulación','Certificado anual GNV',
+ 'Certificado anual GLP','Certificado de conformidad de conversión',
+ 'Permiso de lunas polarizadas','Otro'
+];
+function documentFormFields(type,vehicleId,existing={}){
+ const v=vehicle(vehicleId||existing.vehicleId)||{};
+ const base=[
+  {name:'vehicleId',label:'Vehículo',type:'select',options:vehicleOptions(),required:true,value:vehicleId||existing.vehicleId},
+  {name:'type',label:'Tipo de documento',type:'select',required:true,value:type||existing.type,options:DOCUMENT_TYPES.map(x=>({value:x,label:x}))}
+ ];
+ const shared=[
+  {name:'number',label:'Número de documento / certificado / póliza',value:existing.number,required:['SOAT','CAT','Revisión técnica','Certificado anual GNV','Certificado anual GLP'].includes(type)},
+  {name:'issueDate',label:'Fecha de emisión / inspección',type:'date',value:existing.issueDate},
+  {name:'expiryDate',label:'Fecha de vencimiento',type:'date',value:existing.expiryDate,required:['SOAT','CAT','Revisión técnica','Seguro vehicular','Permiso de circulación','Certificado anual GNV','Certificado anual GLP','Permiso de lunas polarizadas'].includes(type)}
+ ];
+ const detail={
+  'SOAT':[
+   {name:'insurer',label:'Compañía aseguradora',value:existing.insurer,required:true},
+   {name:'coverage',label:'Cobertura / plan',value:existing.coverage}
+  ],
+  'CAT':[
+   {name:'issuer',label:'Entidad emisora del CAT',value:existing.issuer,required:true},
+   {name:'coverage',label:'Cobertura / ámbito',value:existing.coverage}
+  ],
+  'Ficha técnica':[
+   {name:'vin',label:'Número VIN',value:existing.vin||v.vin},
+   {name:'chassis',label:'Número de chasis / serie',value:existing.chassis||v.chassis},
+   {name:'engine',label:'Número de motor',value:existing.engine||v.engine},
+   {name:'brand',label:'Marca',value:existing.brand||v.brand},
+   {name:'model',label:'Modelo / versión',value:existing.model||v.model},
+   {name:'year',label:'Año de fabricación / modelo',type:'number',value:existing.year||v.year},
+   {name:'fuel',label:'Combustible',value:existing.fuel||v.fuel},
+   {name:'category',label:'Categoría vehicular',value:existing.category||v.category},
+   {name:'body',label:'Carrocería',value:existing.body||v.body},
+   {name:'color',label:'Color',value:existing.color||v.color},
+   {name:'seats',label:'Número de asientos',type:'number',value:existing.seats||v.seats},
+   {name:'axles',label:'Número de ejes',type:'number',value:existing.axles||v.axles}
+  ],
+  'Revisión técnica':[
+   {name:'inspectionCenter',label:'Centro de inspección técnica (CITV)',value:existing.inspectionCenter,required:true},
+   {name:'result',label:'Resultado de inspección',type:'select',value:existing.result||'Aprobado',options:['Aprobado','Observado','Desaprobado'].map(x=>({value:x,label:x}))},
+   {name:'inspectionReport',label:'Número de informe (si corresponde)',value:existing.inspectionReport}
+  ],
+  'Seguro vehicular':[
+   {name:'insurer',label:'Compañía aseguradora',value:existing.insurer},
+   {name:'coverage',label:'Cobertura contratada',value:existing.coverage},
+   {name:'deductible',label:'Deducible',value:existing.deductible}
+  ],
+  'Tarjeta de propiedad':[
+   {name:'ownerName',label:'Titular / propietario registral',value:existing.ownerName},
+   {name:'registryOffice',label:'Oficina / zona registral',value:existing.registryOffice},
+   {name:'registryRecord',label:'Número de partida registral',value:existing.registryRecord},
+   {name:'plate',label:'Placa actual',value:existing.plate||v.plate},
+   {name:'previousPlate',label:'Placa anterior (si corresponde)',value:existing.previousPlate},
+   {name:'vin',label:'Número VIN',value:existing.vin||v.vin},
+   {name:'chassis',label:'Número de serie / chasis',value:existing.chassis||v.chassis},
+   {name:'engine',label:'Número de motor',value:existing.engine||v.engine},
+   {name:'brand',label:'Marca',value:existing.brand||v.brand},
+   {name:'model',label:'Modelo / versión',value:existing.model||v.model},
+   {name:'year',label:'Año de fabricación / modelo',type:'number',value:existing.year||v.year},
+   {name:'fuel',label:'Combustible',value:existing.fuel||v.fuel},
+   {name:'category',label:'Categoría / clase',value:existing.category||v.category},
+   {name:'body',label:'Carrocería',value:existing.body||v.body},
+   {name:'color',label:'Color',value:existing.color||v.color},
+   {name:'seats',label:'Número de asientos',type:'number',value:existing.seats||v.seats},
+   {name:'passengers',label:'Número de pasajeros',type:'number',value:existing.passengers||v.passengers},
+   {name:'condition',label:'Condición del vehículo',type:'select',value:existing.condition||'',options:['','Original','Reacondicionado','Reparado'].map(x=>({value:x,label:x||'Seleccionar'}))}
+  ],
+  'Permiso de circulación':[
+   {name:'issuer',label:'Entidad emisora',value:existing.issuer},
+   {name:'authorizationType',label:'Tipo de autorización / modalidad',value:existing.authorizationType},
+   {name:'operationArea',label:'Ámbito o ruta autorizada',value:existing.operationArea},
+   {name:'serviceNumber',label:'Número de habilitación / tarjeta de circulación',value:existing.serviceNumber}
+  ],
+  'Certificado anual GNV':[
+   {name:'certifyingEntity',label:'Entidad certificadora autorizada',value:existing.certifyingEntity,required:true},
+   {name:'gasSystem',label:'Sistema de combustible',type:'select',value:'GNV',options:[{value:'GNV',label:'GNV'}]},
+   {name:'chipCode',label:'Código de chip de control de carga',value:existing.chipCode},
+   {name:'cylinderSerial',label:'Número de serie del cilindro',value:existing.cylinderSerial},
+   {name:'conversionDate',label:'Fecha de conversión / instalación',type:'date',value:existing.conversionDate}
+  ],
+  'Certificado anual GLP':[
+   {name:'certifyingEntity',label:'Entidad certificadora autorizada',value:existing.certifyingEntity,required:true},
+   {name:'gasSystem',label:'Sistema de combustible',type:'select',value:'GLP',options:[{value:'GLP',label:'GLP'}]},
+   {name:'controlDevice',label:'Código del dispositivo de control de carga',value:existing.controlDevice},
+   {name:'tankSerial',label:'Número de serie del tanque',value:existing.tankSerial},
+   {name:'conversionDate',label:'Fecha de conversión / instalación',type:'date',value:existing.conversionDate}
+  ],
+  'Certificado de conformidad de conversión':[
+   {name:'gasSystem',label:'Sistema de conversión',type:'select',value:existing.gasSystem||'GNV',options:['GNV','GLP'].map(x=>({value:x,label:x}))},
+   {name:'certifyingEntity',label:'Entidad certificadora',value:existing.certifyingEntity},
+   {name:'conversionWorkshop',label:'Taller de conversión autorizado',value:existing.conversionWorkshop},
+   {name:'conversionDate',label:'Fecha de conversión',type:'date',value:existing.conversionDate}
+  ],
+  'Permiso de lunas polarizadas':[
+   {name:'issuer',label:'Entidad emisora',value:existing.issuer},
+   {name:'authorizationCode',label:'Código / número de autorización',value:existing.authorizationCode},
+   {name:'vehicleUse',label:'Uso / condición autorizada',value:existing.vehicleUse}
+  ],
+  'Otro':[
+   {name:'issuer',label:'Entidad emisora',value:existing.issuer},
+   {name:'reference',label:'Referencia adicional',value:existing.reference}
+  ]
+ };
+ return [...base,...shared,...(detail[type]||detail['Otro']),{name:'notes',label:'Observaciones',type:'textarea',full:true,value:existing.notes}];
+}
+function openDocumentModal(existing=null,vehicleId=null){
+ const type=existing?.type||'SOAT';openModal(existing?'Editar documento':'Registrar documento',documentFormFields(type,vehicleId,existing||{}),data=>api('/documents'+(existing?'/'+existing.id:''),{method:existing?'PUT':'POST',body:JSON.stringify(data)}));
+ const bindType=()=>{const sel=$('#modalFields select[name="type"]');if(!sel)return;sel.addEventListener('change',()=>{const values=Object.fromEntries(new FormData($('#modalForm')).entries());const selected=sel.value;$('#modalFields').innerHTML=fields(documentFormFields(selected,values.vehicleId,values));bindType();});};bindType();
+}
+$('#addObservation').onclick=()=>openObservationModal();
+window.configureOilVehicle=id=>{const v=vehicle(id);if(!v)return;openModal('Configurar control de aceite · '+v.name,[
+ {name:'currentKm',label:'Kilometraje actual del odómetro',type:'number',min:0,value:v.currentKm,required:true},
+ {name:'oilLastKm',label:'Kilometraje del último cambio realizado',type:'number',min:0,value:activeOilCycle(v)?.startKm??v.oilLastKm??0,required:true},
+ {name:'oilLastDate',label:'Fecha del último cambio',type:'date',value:activeOilCycle(v)?.startDate||v.oilLastDate||''},
+ {name:'oilInterval',label:'Intervalo entre cambios (km)',type:'number',min:1,value:v.oilInterval||DB.settings?.oilIntervalKm||5000,required:true}
+ ],d=>api('/vehicles/'+id,{method:'PUT',body:JSON.stringify({...v,...d})}))};
+$('#oilSettingsForm')?.addEventListener('submit',async e=>{e.preventDefault();const f=e.currentTarget;const d=Object.fromEntries(new FormData(f).entries());const settings={earlyOilChangeRestartsCycle:!!f.elements.earlyOilChangeRestartsCycle?.checked,oilIntervalKm:Number(d.oilIntervalKm),greenMinKm:Number(d.greenMinKm),yellowMinKm:Number(d.yellowMinKm),orangeMinKm:Number(d.orangeMinKm)};if(!(settings.greenMinKm>settings.yellowMinKm&&settings.yellowMinKm>settings.orangeMinKm&&settings.orangeMinKm>=0)){toast('Los rangos deben cumplir: verde > amarillo > naranja ≥ 0');return}try{await api('/settings',{method:'PUT',body:JSON.stringify(settings)});f.dataset.loaded='';await refresh();toast('Configuración de aceite guardada')}catch(err){toast(err.message)}});
+$('#addWeekly').onclick=()=>openModal('Registrar revisión semanal',[
+ {name:'vehicleId',label:'Vehículo',type:'select',options:vehicleOptions(),required:true},
+ {name:'date',label:'Fecha de revisión',type:'date',value:today(),required:true},
+ {name:'km',label:'Kilometraje actual',type:'number',min:0,required:true},
+ ...['tires','brakes','lights','fluids','cleaning','documents'].map((name,i)=>({name,label:['Neumáticos','Frenos','Luces','Niveles de aceite/agua','Limpieza general','Documentos'][i],type:'select',options:['Correcto','Deficiente','Pendiente'].map(x=>({value:x,label:x}))})),
+ {name:'notes',label:'Observaciones / trabajos pendientes',type:'textarea',full:true}
+],d=>api('/weekly-reviews',{method:'POST',body:JSON.stringify(d)}));
+window.deleteWeekly=async id=>{if(!confirm('¿Eliminar esta revisión semanal?'))return;await api('/weekly-reviews/'+id,{method:'DELETE'});await refresh();toast('Revisión eliminada')};
+window.deleteItem=async(type,id)=>{if(!confirm(type==='maintenances'?'¿Anular esta intervención? El registro se conservará en el historial.':'¿Eliminar este registro?'))return;await api('/'+type+'/'+id,{method:'DELETE'});await refresh();toast(type==='maintenances'?'Intervención anulada y conservada':'Registro eliminado')};
+window.deleteObservation=async id=>{if(!confirm('¿Eliminar esta observación?'))return;await api('/observations/'+id,{method:'DELETE'});await refresh();toast('Observación eliminada')};
+window.setObservation=async(id,status)=>{const o=DB.observations.find(x=>String(x.id)===String(id));const selected=o?.vehicleId;await api('/observations/'+id,{method:'PATCH',body:JSON.stringify({status})});await refresh();if(selected&&$('#observationVehicleDetail')&&!$('#observationVehicleDetail').hidden)openObservationVehicle(selected);toast(status==='Resuelto'?'Observación marcada como resuelta':'Estado actualizado')};
+function commonMaintenanceFields(m={}){return [
+ {name:'vehicleId',label:'Vehículo',type:'select',options:vehicleOptions(),required:true,value:m.vehicleId},
+ {name:'type',label:'Tipo de servicio',type:'select',required:true,options:[...new Set(['Preventivo','Correctivo','Reparación','Neumáticos','Otro',...(m.type?[m.type]:[])])].map(x=>({value:x,label:x})),value:m.type},
+ {name:'date',label:'Fecha del servicio',type:'date',value:m.date||today(),required:true},{name:'km',label:'Kilometraje',type:'number',min:0,value:m.km,required:true},
+ {name:'workKind',label:'Clase de intervención',type:'select',options:['Mantenimiento','Reparación'].map(x=>({value:x,label:x})),value:m.workKind||(String(m.type).toLowerCase()==='reparación'?'Reparación':'Mantenimiento')},{name:'driverName',label:'Nombre del chofer',value:m.driverName},{name:'provider',label:'Taller / proveedor',value:m.provider},{name:'technician',label:'Mecánico / técnico responsable',value:m.technician},{name:'laborCost',label:'Mano de obra (S/)',type:'number',min:0,step:'0.01',value:m.laborCost},{name:'partsCost',label:'Repuestos (S/)',type:'number',min:0,step:'0.01',value:m.partsCost},{name:'cost',label:'Costo total (S/)',type:'number',min:0,step:'0.01',value:m.totalCost??m.cost},{name:'parts',label:'Repuestos',value:m.parts},{name:'status',label:'Estado',type:'select',options:['Realizado','Pendiente','Anulado'].map(x=>({value:x,label:x})),value:m.status||'Realizado'},{name:'description',label:'Detalle del trabajo / observaciones',type:'textarea',value:m.description,full:true}
+]}
+window.editMaintenance=id=>{const m=DB.maintenances.find(x=>String(x.id)===String(id));openModal('Editar mantenimiento',commonMaintenanceFields(m),d=>api('/maintenances/'+id,{method:'PUT',body:JSON.stringify(d)}))};
+window.editDocument=id=>{const d=DB.documents.find(x=>String(x.id)===String(id));if(d)openDocumentModal(d)};
+window.editObservation=id=>{const o=DB.observations.find(x=>String(x.id)===String(id));openModal('Editar observación',[
+ {name:'vehicleId',label:'Vehículo',type:'select',options:vehicleOptions(),required:true,value:o.vehicleId},{name:'date',label:'Fecha',type:'date',value:o.date,required:true},
+ {name:'priority',label:'Prioridad',type:'select',options:['Baja','Media','Alta'].map(x=>({value:x,label:x})),value:o.priority},{name:'text',label:'Observación',type:'textarea',value:o.text,full:true,required:true}
+],data=>api('/observations/'+id,{method:'PUT',body:JSON.stringify({...data,status:o.status})}))};
+window.editWeekly=id=>{const r=DB.weeklyReviews.find(x=>String(x.id)===String(id));openModal('Editar revisión semanal',[
+ {name:'vehicleId',label:'Vehículo',type:'select',options:vehicleOptions(),required:true,value:r.vehicleId},{name:'date',label:'Fecha',type:'date',value:r.date,required:true},{name:'km',label:'Kilometraje',type:'number',min:0,value:r.km,required:true},
+ ...['tires','brakes','lights','fluids','cleaning','documents'].map((name,i)=>({name,label:['Neumáticos','Frenos','Luces','Niveles de aceite/agua','Limpieza general','Documentos'][i],type:'select',value:r[name],options:['Correcto','Deficiente','Pendiente'].map(x=>({value:x,label:x}))})),
+ {name:'notes',label:'Observaciones',type:'textarea',value:r.notes,full:true}
+],data=>api('/weekly-reviews/'+id,{method:'PUT',body:JSON.stringify(data)}))};
+async function refresh(){DB=await api('/data');DB.weeklyReviews=DB.weeklyReviews||[];DB.oilCycles=DB.oilCycles||[];DB.maintenanceAudit=DB.maintenanceAudit||[];render()}
+async function initializeSecureApp(){
+ const token=authToken();
+ if(!token){showLogin();return;}
+ try{await api('/auth/me');hideLogin();await refresh();}
+ catch(error){sessionStorage.removeItem(AUTH_KEY);showLogin(error.message||'Inicia sesión para continuar.');}
+}
+document.getElementById('loginForm')?.addEventListener('submit',async event=>{
+ event.preventDefault();const form=event.currentTarget;const button=form.querySelector('button[type="submit"]');const message=document.getElementById('loginMessage');button.disabled=true;button.textContent='Ingresando…';
+ try{const result=await api('/auth/login',{method:'POST',body:JSON.stringify({username:form.elements.username.value.trim(),password:form.elements.password.value})});sessionStorage.setItem(AUTH_KEY,result.token);form.reset();hideLogin();await refresh();toast('Sesión iniciada correctamente');}
+ catch(error){if(message)message.textContent=error.message;}
+ finally{button.disabled=false;button.textContent='Iniciar sesión';}
+});
+document.getElementById('logoutBtn')?.addEventListener('click',logout);
+initializeSecureApp().catch(error=>showLogin(error.message));
+setInterval(()=>{if(authToken()&&!document.hidden)refresh().catch(()=>{});},30000);
+// ==========================================
+// NOTIFICACIONES PUSH - MARTÍNEZ VEHICULAR
+// ==========================================
 
-/* Vistas de historial técnico y documentos por vehículo */
-.record-detail{margin-top:18px;animation:fade .2s ease}
-.record-detail-head{display:flex;align-items:center;justify-content:space-between;gap:18px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:22px;margin-bottom:16px}
-.record-detail-head h2{margin:6px 0;font-size:22px}.record-detail-head p{margin:0;color:var(--muted)}
-.record-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:16px}
-.record-summary>div{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px}
-.record-summary small{display:block;color:var(--muted);font-size:10px;font-weight:800;letter-spacing:.7px}.record-summary b{display:block;font-size:22px;margin-top:7px}
-.record-list{display:grid;gap:12px}
-.record-item,.document-item{display:flex;align-items:flex-start;gap:18px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:17px 19px}
-.record-item-date{min-width:105px;color:#64748b;font-weight:700;font-size:12px;padding-top:2px}
-.record-item p,.document-item p{margin:6px 0;color:#526174}.record-item small,.document-item small{color:var(--muted)}
-.document-item{justify-content:space-between}.document-item h3{margin:10px 0 2px;font-size:16px}
-@media(max-width:700px){.record-detail-head,.document-item{flex-direction:column;align-items:stretch}.record-summary{grid-template-columns:1fr}.record-item{gap:10px;flex-direction:column}.record-item-date{min-width:0}}
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding)
+    .replace(/-/g, '+')
+    .replace(/_/g, '/');
 
-/* Observaciones organizadas por vehículo */
-.observation-detail-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px;margin-top:18px}
-.obs-card{display:flex;flex-direction:column;gap:12px}
-.obs-card p{margin:0;white-space:pre-wrap}
-.obs-card .obs-meta:last-child{align-items:center;gap:10px;flex-wrap:wrap}
-.obs-actions{flex-wrap:wrap;justify-content:flex-end}
-.obs-resolved{border-color:#b8dfce;background:#f7fcf9}
-.resolved-label{font-size:11px;color:#25815a;font-weight:800}
-.btn-resolve{font-size:10px;padding:8px 11px}
-.record-detail-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-@media(max-width:650px){.record-detail-head{gap:12px;flex-direction:column}.record-detail-actions{width:100%}.observation-detail-list{grid-template-columns:1fr}}
+  const rawData = atob(base64);
+  return Uint8Array.from(
+    [...rawData].map(char => char.charCodeAt(0))
+  );
+}
 
+async function activarNotificaciones() {
+  const button = document.getElementById('enableNotifications');
 
-/* Acceso seguro v1.4.0 */
-body.auth-locked{overflow:hidden}
-body.auth-locked>.sidebar,body.auth-locked>.main{visibility:hidden}
-.login-screen{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:22px;background:linear-gradient(135deg,#101c2d 0%,#18394b 55%,#0e6965 100%)}
-.login-screen[hidden]{display:none}
-.login-card{width:min(100%,430px);padding:34px;background:#fff;border:1px solid #ffffff55;border-radius:18px;box-shadow:0 28px 90px #06132166;display:flex;flex-direction:column;gap:11px}
-.login-brand{display:flex;align-items:center;gap:12px;margin-bottom:22px;color:#17283d}.login-brand .brand-mark{background:#d7f4f2;color:#123047}.login-brand b{display:block;letter-spacing:2px;font-size:15px}.login-brand small{display:block;color:#718096;font-size:9px;letter-spacing:1.8px;margin-top:4px}
-.login-card h1{font-size:27px;margin:0;color:#17283d}.login-card>p{margin:0 0 10px;color:#718096;line-height:1.5}.login-card label{font-size:12px;font-weight:750;color:#34465b;margin-top:5px}.login-card input{width:100%;border:1px solid #dce4ec;border-radius:9px;padding:13px 14px;font:inherit;outline:none}.login-card input:focus{border-color:#159b91;box-shadow:0 0 0 3px #159b9120}.login-submit{width:100%;padding:13px;margin-top:7px}.login-message{min-height:18px!important;margin:2px 0!important;color:#a33d3d!important;font-size:12px}.login-foot{text-align:center;color:#8996a6;margin-top:8px;font-size:10px}
-@media(max-width:480px){.login-card{padding:25px 21px}}
+  try {
+    if (button) {
+      button.disabled = true;
+      button.textContent = 'Activando...';
+    }
+
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      throw new Error('Tu navegador no admite notificaciones push.');
+    }
+
+    const permission = await Notification.requestPermission();
+
+    if (permission !== 'granted') {
+      throw new Error('Debes permitir las notificaciones en el navegador.');
+    }
+
+    const keyResponse = await fetch(`${API_BASE}/api/push/public-key`);
+    const keyData = await keyResponse.json();
+
+    if (!keyResponse.ok || !keyData.publicKey) {
+      throw new Error(keyData.error || 'No se pudo obtener la clave pública.');
+    }
+
+    const registration = await navigator.serviceWorker.register('/service-worker.js');
+
+    let subscription = await registration.pushManager.getSubscription();
+
+    if (!subscription) {
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(keyData.publicKey)
+      });
+    }
+
+    const response = await fetch(`${API_BASE}/api/push/subscribe`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authToken()}`
+      },
+      body: JSON.stringify({
+        subscription: subscription.toJSON(),
+        responsibleName: 'Administrador'
+      })
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || 'No se pudo registrar este dispositivo.');
+    }
+
+    if (button) {
+      button.textContent = '🔔 Notificaciones activadas';
+    }
+
+    alert(result.message || '¡Notificaciones activadas correctamente!');
+
+  } catch (error) {
+    console.error('Error al activar notificaciones:', error);
+    alert(error.message || 'Ocurrió un error al activar las notificaciones.');
+
+    if (button) {
+      button.textContent = '🔔 Activar notificaciones';
+    }
+
+  } finally {
+    if (button) button.disabled = false;
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const button = document.getElementById('enableNotifications');
+
+  if (button) {
+    button.addEventListener('click', activarNotificaciones);
+  }
+});
+
+// Muestra la versión en la barra lateral y avisa si el servidor no está actualizado.
+document.addEventListener('DOMContentLoaded', async () => {
+  const el = document.getElementById('sideVersion');
+  if (!el) return;
+  const screen = '1.4.0';
+  el.textContent = `v${screen}`;
+  try {
+    const r = await fetch((window.API_BASE_URL || '').replace(/\/$/, '') + '/api/health');
+    const j = await r.json();
+    if (j.version !== screen) el.textContent = `v${screen} · ⚠ servidor ${j.version || 'anterior'}`;
+  } catch {
+    el.textContent = `v${screen} · ⚠ servidor sin respuesta`;
+  }
+});
